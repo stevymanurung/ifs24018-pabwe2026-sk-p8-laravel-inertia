@@ -1,0 +1,8 @@
+# Jika server memakai Nginx, tambahkan di dalam blok server { } Anda:
+location ^~ /build/ {
+    add_header Cache-Control "public, max-age=31536000, immutable";
+    access_log off;
+}
+location ~* \.(?:png|jpe?g|gif|webp|svg|ico)$ {
+    add_header Cache-Control "public, max-age=2592000";
+}

@@ -62,3 +62,24 @@ textarea::placeholder {
   outline: 3px solid #87462e;
   outline-offset: 2px;
 }
+
+/* Layar <=800px: sidebar hanya selebar 70px, sehingga nama & peran pengguna
+   meluber ke area konten terang (kontras 1.19). Disembunyikan secara visual
+   namun tetap terbaca oleh screen reader. */
+@media (max-width: 800px) {
+  .sidebar {
+    overflow: hidden;
+  }
+
+  .sidebar .user-chip > div:last-child {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+}
