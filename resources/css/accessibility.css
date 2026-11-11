@@ -35,12 +35,12 @@
   color: #59635b;
 }
 
-.user-chip {
-  background: #29352e;
+.sidebar .user-chip > div:last-child {
+  background-color: #29352e;
 }
 
-.user-chip b,
-.user-chip small {
+.sidebar .user-chip > div:last-child > b,
+.sidebar .user-chip > div:last-child > small {
   color: #dfe6dd;
 }
 
