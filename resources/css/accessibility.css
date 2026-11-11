@@ -36,13 +36,12 @@
 }
 
 .user-chip {
-  background: #f8f8f5;
-  border-radius: 8px;
+  background: #29352e;
 }
 
 .user-chip b,
 .user-chip small {
-  color: #29352e;
+  color: #dfe6dd;
 }
 
 .role-pill.admin {
