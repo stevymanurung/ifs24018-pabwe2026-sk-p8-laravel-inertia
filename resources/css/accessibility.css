@@ -1,0 +1,60 @@
+:root {
+  --muted: #59635b;
+  --accent: #87462e;
+}
+
+.hero-copy > p,
+.hero-meta,
+.art-paper small,
+.cover-1,
+.cover-2,
+.article-card p,
+.article-meta,
+.footer-inner p,
+.footer-inner small,
+.footer-links,
+.back-link,
+.reading-excerpt,
+.community-cta p,
+.auth-back,
+.auth-switch,
+.page-heading p,
+.detail-heading p,
+.stat-box span,
+.list-header,
+.post-title-cell small,
+.row-category,
+.empty-state,
+.ai-panel-title,
+.ai-panel-title small,
+.ai-result p,
+.ai-result small,
+.stat-inline,
+.text-link,
+.upload-box {
+  color: #59635b;
+}
+
+.side-label,
+.user-chip small {
+  color: #c2cec2;
+}
+
+.role-pill.admin {
+  color: #754027;
+}
+
+.role-pill.member {
+  color: #405b41;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #59635b;
+  opacity: 1;
+}
+
+:focus-visible {
+  outline: 3px solid #87462e;
+  outline-offset: 2px;
+}
