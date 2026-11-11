@@ -35,9 +35,14 @@
   color: #59635b;
 }
 
-.side-label,
+.user-chip {
+  background: #f8f8f5;
+  border-radius: 8px;
+}
+
+.user-chip b,
 .user-chip small {
-  color: #c2cec2;
+  color: #29352e;
 }
 
 .role-pill.admin {
