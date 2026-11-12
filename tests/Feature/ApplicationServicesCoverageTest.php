@@ -194,11 +194,10 @@ class ApplicationServicesCoverageTest extends TestCase
         $this->assertSame('Ringkasan', $items[0]['excerpt']);
         $this->assertCount(1, $items);
 
-        Http::fake([
-            'api.openai.com/*' => Http::response([
-                'choices' => [['message' => ['content' => '{"articles":[]}']]],
-            ], 200),
-        ]);
+        Http::fakeSequence()
+            ->push([
+                'choices' => [['message' => ['content' => json_encode(['articles' => []])]]],
+            ], 200);
         $this->expectException(\RuntimeException::class);
         app(OpenAiPostGeneratorService::class)->generate('topik teknologi', 1);
     }
