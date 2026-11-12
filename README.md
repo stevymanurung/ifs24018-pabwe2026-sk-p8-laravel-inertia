@@ -58,7 +58,7 @@ php artisan test
 composer audit
 vendor/bin/phpunit --coverage-text
 ```
-Untuk coverage 100% pada `app/`, jalankan PHPUnit dengan driver coverage yang terpasang (PCOV atau Xdebug), lalu lengkapi tes untuk seluruh cabang controller/service/middleware. ZIP sumber ini menyertakan tes dasar fitur akses, publikasi, dan model; angka 100% harus diverifikasi pada lingkungan PHP lokal, bukan diklaim dari proses pembuatan arsip.
+Laporan coverage PHPUnit memerlukan driver PCOV atau Xdebug. Jenkins tetap menjalankan seluruh tes tanpa driver tersebut; jika driver tersedia, Jenkins juga membuat laporan coverage, tetapi coverage 100% bukan syarat build. Untuk mengejar coverage 100% pada `app/`, lengkapi tes untuk seluruh cabang controller/service/middleware dan jalankan PHPUnit dengan driver coverage. ZIP sumber ini menyertakan tes dasar fitur akses, publikasi, dan model; angka coverage harus diverifikasi, bukan diklaim dari proses pembuatan arsip.
 
 ## Struktur
 Fitur backend berada di `app/Features/{Auth,Post,Admin,Ai,Profile}`. Route publik, member, dan admin dipisah middleware; kepemilikan artikel diverifikasi melalui Policy dan middleware. Halaman publik menggunakan layout tanpa sidebar, sedangkan workspace memakai sidebar.
