@@ -1,4 +1,96 @@
-import React,{useEffect,useState} from 'react';import {router} from '@inertiajs/react';import {X,Save,LoaderCircle,ImagePlus} from 'lucide-react';import MarkdownEditor from './MarkdownEditor';
-const blank={title:'',category:'Teknologi',excerpt:'',content:'',is_published:false};
-export default function PostFormModal({open,onClose,post,categories}){const [form,setForm]=useState(blank),[cover,setCover]=useState(null),[busy,setBusy]=useState(false),[errors,setErrors]=useState({});useEffect(()=>{if(open){setForm(post?{title:post.title,category:post.category,excerpt:post.excerpt||'',content:post.content,is_published:!!post.is_published}:blank);setCover(null);setErrors({});}},[open,post]);if(!open)return null;const set=(k,v)=>setForm(f=>({...f,[k]:v}));function submit(e){e.preventDefault();setBusy(true);const data=new FormData();Object.entries(form).forEach(([k,v])=>data.append(k,k==='is_published'?(v?'1':'0'):v??''));if(cover)data.append('cover',cover);if(post)data.append('_method','PUT');router.post(post?`/dashboard/posts/${post.id}`:'/dashboard/posts',data,{forceFormData:true,onError:setErrors,onFinish:()=>setBusy(false),onSuccess:onClose});}
-return <div className="modal-backdrop"><form className="fullscreen-modal" onSubmit={submit}><header className="modal-head"><div><span className="eyebrow">EDITORIAL WORKSPACE</span><h2>{post?'Ubah Artikel':'Tulis Artikel Baru'}</h2></div><button type="button" className="icon-button" aria-label="Tutup formulir artikel" onClick={onClose}><X/></button></header><div className="modal-body"><div className="form-grid"><label>Judul Artikel<input value={form.title} onChange={e=>set('title',e.target.value)} required maxLength="180" placeholder="Judul yang menarik..."/>{errors.title&&<small className="field-error">{errors.title}</small>}</label><label>Kategori<select aria-label="Kategori artikel" value={form.category} onChange={e=>set('category',e.target.value)}>{categories.map(c=><option key={c}>{c}</option>)}</select></label></div><label>Ringkasan<textarea rows="2" maxLength="600" value={form.excerpt} onChange={e=>set('excerpt',e.target.value)} placeholder="Ringkasan singkat untuk pembaca..."/></label><label>Konten Artikel <span className="muted">· Markdown</span></label><MarkdownEditor value={form.content} onChange={v=>set('content',v)}/>{errors.content&&<small className="field-error">{errors.content}</small>}<label className="upload-box"><ImagePlus size={20}/><span>{cover?cover.name:'Pilih foto cover (JPG, PNG, WEBP · maks. 5 MB)'}</span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e=>setCover(e.target.files?.[0]||null)}/></label><label className="check-line"><input type="checkbox" checked={form.is_published} onChange={e=>set('is_published',e.target.checked)}/> Publikasikan setelah disimpan</label></div><footer className="modal-foot"><button type="button" className="button button-light" onClick={onClose}>Batal</button><button className="button button-dark" disabled={busy}>{busy?<LoaderCircle className="spin" size={17}/>:<Save size={17}/>} {busy?'Menyimpan...':'Simpan Artikel'}</button></footer></form></div>}
+import { router, useForm } from '@inertiajs/react';
+import { useState } from 'react';
+import FullScreenModal from './FullScreenModal';
+import MarkdownEditor from './MarkdownEditor';
+import Spinner from './Spinner';
+
+const inputClass = 'w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30';
+
+function Field({ label, error, children, htmlFor }) {
+    return (
+        <div>
+            <label htmlFor={htmlFor} className="mb-1 block text-sm font-medium text-slate-700">{label}</label>
+            {children}
+            {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+        </div>
+    );
+}
+
+/** Modal full screen untuk Tambah (post === null) dan Ubah artikel. */
+export default function PostFormModal({ open, post, categories, onClose }) {
+    const isEdit = post !== null;
+    const form = useForm({
+        title: post?.title ?? '',
+        category: post?.category ?? categories[0].value,
+        excerpt: post?.excerpt ?? '',
+        content: post?.content ?? '',
+        is_published: post?.is_published ?? false,
+        cover: null,
+    });
+    const [removing, setRemoving] = useState(false);
+
+    const submit = () => {
+        const options = { forceFormData: true, preserveScroll: true, onSuccess: () => onClose() };
+
+        if (isEdit) {
+            form.transform((data) => ({ ...data, _method: 'put' })).post(`/dashboard/posts/${post.id}`, options);
+        } else {
+            form.post('/dashboard/posts', options);
+        }
+    };
+
+    const removeCover = () => {
+        router.delete(`/dashboard/posts/${post.id}/cover`, {
+            preserveScroll: true,
+            onStart: () => setRemoving(true),
+            onFinish: () => setRemoving(false),
+        });
+    };
+
+    return (
+        <FullScreenModal open={open} title={isEdit ? 'Ubah Artikel' : 'Tambah Artikel'} onClose={onClose} onSubmit={submit} processing={form.processing}>
+            <div className="space-y-5">
+                <Field label="Judul" htmlFor="post-title" error={form.errors.title}>
+                    <input id="post-title" type="text" className={inputClass} value={form.data.title} onChange={(e) => form.setData('title', e.target.value)} />
+                </Field>
+
+                <div className="grid gap-5 sm:grid-cols-2">
+                    <Field label="Kategori" htmlFor="post-category" error={form.errors.category}>
+                        <select id="post-category" className={inputClass} value={form.data.category} onChange={(e) => form.setData('category', e.target.value)}>
+                            {categories.map((c) => (
+                                <option key={c.value} value={c.value}>{c.value} — {c.description}</option>
+                            ))}
+                        </select>
+                    </Field>
+                    <Field label="Status" htmlFor="post-status" error={form.errors.is_published}>
+                        <select id="post-status" className={inputClass} value={form.data.is_published ? '1' : '0'} onChange={(e) => form.setData('is_published', e.target.value === '1')}>
+                            <option value="0">Draft</option>
+                            <option value="1">Published</option>
+                        </select>
+                    </Field>
+                </div>
+
+                <Field label="Ringkasan (opsional, 1-2 kalimat)" htmlFor="post-excerpt" error={form.errors.excerpt}>
+                    <textarea id="post-excerpt" rows={2} className={inputClass} value={form.data.excerpt} onChange={(e) => form.setData('excerpt', e.target.value)} />
+                </Field>
+
+                <Field label="Cover (JPG/PNG/WEBP, maks 2 MB)" htmlFor="post-cover" error={form.errors.cover}>
+                    <input id="post-cover" type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => form.setData('cover', e.target.files[0] ?? null)} className="block w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-primary-light file:px-4 file:py-2 file:font-medium file:text-primary" />
+                    {isEdit && post.cover_url && (
+                        <div className="mt-3 flex items-center gap-3">
+                            <img src={post.cover_url} alt="Cover saat ini" className="h-16 w-24 rounded-lg object-cover" />
+                            <button type="button" onClick={removeCover} disabled={removing} className="inline-flex items-center gap-2 text-sm font-medium text-red-600 hover:underline disabled:opacity-60">
+                                {removing && <Spinner />}
+                                Hapus cover
+                            </button>
+                        </div>
+                    )}
+                </Field>
+
+                <Field label="Isi artikel (Markdown)" error={form.errors.content}>
+                    <MarkdownEditor value={form.data.content} onChange={(value) => form.setData('content', value)} />
+                </Field>
+            </div>
+        </FullScreenModal>
+    );
+}

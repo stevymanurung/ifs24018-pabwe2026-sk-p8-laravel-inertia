@@ -1,3 +1,18 @@
 <?php
+
 namespace App\Features\Ai\Contracts;
-interface AiClientInterface { public function generate(string $prompt,int $quantity): array; }
+
+use App\Features\Ai\DTO\GeneratedPostItem;
+use App\Features\Ai\Exceptions\AiGenerationException;
+
+interface AiClientInterface
+{
+    /**
+     * Hasilkan draft artikel dari sebuah topik.
+     *
+     * @return list<GeneratedPostItem>
+     *
+     * @throws AiGenerationException
+     */
+    public function generate(string $topic, int $quantity, ?string $category = null): array;
+}

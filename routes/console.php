@@ -1,3 +1,8 @@
 <?php
+
+use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
-Artisan::command('blog:about', function () { $this->info('BlogVerse Pro'); })->purpose('Display BlogVerse information');
+
+Artisan::command('inspire', function () {
+    $this->comment(Inspiring::quote());
+})->purpose('Display an inspiring quote');

@@ -1,17 +1,62 @@
 <?php
+
 namespace App\Features\Auth\Controllers;
-use App\Http\Controllers\Controller;
+
 use App\Features\Auth\Actions\LoginUserAction;
 use App\Features\Auth\Actions\RegisterUserAction;
+use App\Features\Auth\Requests\LoginRequest;
+use App\Features\Auth\Requests\RegisterRequest;
+use App\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
+use Inertia\Response;
+
 class AuthController extends Controller
 {
- public function loginPage(){return Inertia::render('Auth/Login');}
- public function registerPage(){return Inertia::render('Auth/Register');}
- public function login(Request $request,LoginUserAction $action){$data=$request->validate(['username'=>['required','string'],'password'=>['required','string'],'remember'=>['nullable','boolean']]);$action->execute($data['username'],$data['password'],(bool)($data['remember']??false));return redirect()->intended(Auth::user()->isAdmin()?'/admin/users':'/dashboard/posts');}
- public function register(Request $request,RegisterUserAction $action){$data=$request->validate(['name'=>['required','string','max:120'],'username'=>['required','alpha_dash','min:3','max:30','unique:users,username'],'email'=>['required','email','max:255','unique:users,email'],'password'=>['required','confirmed',Password::min(10)->letters()->mixedCase()->numbers()->symbols()]]);$user=$action->execute($data);Auth::login($user);$request->session()->regenerate();return redirect('/dashboard/posts');}
- public function logout(Request $request){Auth::logout();$request->session()->invalidate();$request->session()->regenerateToken();return redirect('/');}
+    public function showLogin(): Response
+    {
+        return Inertia::render('Auth/Login', ['login' => old('login', '')]);
+    }
+
+    public function login(LoginRequest $request, LoginUserAction $action): RedirectResponse
+    {
+        $credentials = $request->validated();
+
+        if (! $action->execute($credentials['login'], $credentials['password'], $request->boolean('remember'))) {
+            throw ValidationException::withMessages([
+                'login' => 'Username/email atau password salah.',
+            ]);
+        }
+
+        $request->session()->regenerate();
+
+        return redirect()->intended(
+            $request->user()->isAdmin() ? route('admin.users.index') : route('posts.index')
+        );
+    }
+
+    public function showRegister(): Response
+    {
+        return Inertia::render('Auth/Register');
+    }
+
+    public function register(RegisterRequest $request, RegisterUserAction $action): RedirectResponse
+    {
+        Auth::login($action->execute($request->validated()));
+        $request->session()->regenerate();
+
+        return redirect()->route('posts.index')->with('success', 'Akun berhasil dibuat. Selamat menulis!');
+    }
+
+    public function logout(Request $request): RedirectResponse
+    {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('home');
+    }
 }

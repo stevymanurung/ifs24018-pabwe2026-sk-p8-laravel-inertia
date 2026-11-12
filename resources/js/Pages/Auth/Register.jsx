@@ -1,1 +1,48 @@
-import React from 'react';import {Head,Link,useForm} from '@inertiajs/react';import {BookOpen,ArrowLeft,UserPlus} from 'lucide-react';export default function Register(){const {data,setData,post,processing,errors}=useForm({name:'',username:'',email:'',password:'',password_confirmation:''});function submit(e){e.preventDefault();post('/register');}return <><Head title="Daftar"/><main className="auth-page"><Link href="/" className="auth-back"><ArrowLeft size={16}/> Kembali ke BlogVerse</Link><div className="auth-card"><Link href="/" className="brand auth-brand"><span className="brand-mark"><BookOpen/></span>BlogVerse<span className="brand-dot">.</span></Link><span className="eyebrow">MULAI BERKARYA</span><h1>Buat akun penulis.</h1><p className="muted">Bangun ruang untuk gagasanmu sendiri.</p><form onSubmit={submit} className="auth-form"><label>Nama Lengkap<input value={data.name} onChange={e=>setData('name',e.target.value)} required/>{errors.name&&<small className="field-error">{errors.name}</small>}</label><label>Username<input value={data.username} onChange={e=>setData('username',e.target.value)} required/>{errors.username&&<small className="field-error">{errors.username}</small>}</label><label>Email<input type="email" value={data.email} onChange={e=>setData('email',e.target.value)} required/>{errors.email&&<small className="field-error">{errors.email}</small>}</label><label>Password<input type="password" value={data.password} onChange={e=>setData('password',e.target.value)} required/>{errors.password&&<small className="field-error">{errors.password}</small>}<small className="muted">Min. 10 karakter, huruf besar-kecil, angka, dan simbol.</small></label><label>Konfirmasi Password<input type="password" value={data.password_confirmation} onChange={e=>setData('password_confirmation',e.target.value)} required/></label><button className="button button-dark button-full" disabled={processing}>{processing?'Membuat akun...':<><UserPlus size={17}/> Daftar</>}</button></form><p className="auth-switch">Sudah punya akun? <Link href="/login">Masuk</Link></p></div></main></>}
+import { Head, Link, useForm } from '@inertiajs/react';
+import Spinner from '../../components/Spinner';
+import PublicLayout from '../../Layouts/PublicLayout';
+
+const fields = [
+    ['name', 'Nama lengkap', 'text', 'name'],
+    ['username', 'Username', 'text', 'username'],
+    ['email', 'Email', 'email', 'email'],
+    ['password', 'Password', 'password', 'new-password'],
+    ['password_confirmation', 'Konfirmasi password', 'password', 'new-password'],
+];
+
+export default function Register() {
+    const { data, setData, post, processing, errors } = useForm({ name: '', username: '', email: '', password: '', password_confirmation: '' });
+
+    const submit = (event) => {
+        event.preventDefault();
+        post('/register');
+    };
+
+    return (
+        <PublicLayout>
+            <Head title="Daftar" />
+            <div className="mx-auto w-full max-w-md px-4 py-16">
+                <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+                    <h1 className="font-serif text-3xl font-bold text-slate-900">Daftar Penulis</h1>
+                    <form onSubmit={submit} className="mt-6 space-y-4">
+                        {fields.map(([name, label, type, autoComplete]) => (
+                            <div key={name}>
+                                <label htmlFor={`register-${name}`} className="mb-1 block text-sm font-medium">{label}</label>
+                                <input id={`register-${name}`} name={name} type={type} autoComplete={autoComplete} value={data[name]} onChange={(e) => setData(name, e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                                {errors[name] && <p className="mt-1 text-sm text-red-600">{errors[name]}</p>}
+                            </div>
+                        ))}
+                        <button id="register-submit" type="submit" disabled={processing} className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 font-semibold text-white hover:bg-primary-dark disabled:opacity-60">
+                            {processing && <Spinner />}
+                            Daftar
+                        </button>
+                    </form>
+                    <p className="mt-6 text-center text-sm text-slate-500">
+                        Sudah punya akun?{' '}
+                        <Link href="/login" className="font-semibold text-primary hover:underline">Masuk</Link>
+                    </p>
+                </div>
+            </div>
+        </PublicLayout>
+    );
+}

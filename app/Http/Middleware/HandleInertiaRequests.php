@@ -1,10 +1,47 @@
 <?php
+
 namespace App\Http\Middleware;
-use Inertia\Middleware;
+
 use Illuminate\Http\Request;
+use Inertia\Middleware;
+
 class HandleInertiaRequests extends Middleware
 {
- protected $rootView='app';
- public function version(Request $request): ?string { return parent::version($request); }
- public function share(Request $request): array { return array_merge(parent::share($request),['auth'=>['user'=>$request->user()?->only('id','name','username','email','role')],'flash'=>['success'=>fn()=>$request->session()->get('success'),'error'=>fn()=>$request->session()->get('error'),'aiGenerated'=>fn()=>$request->session()->get('aiGenerated')]]); }
+    /**
+     * Root template yang dimuat pada kunjungan pertama.
+     *
+     * @var string
+     */
+    protected $rootView = 'app';
+
+    /**
+     * Props yang dibagikan ke seluruh halaman Inertia.
+     *
+     * @return array<string, mixed>
+     */
+    public function share(Request $request): array
+    {
+        $user = $request->user();
+
+        return [
+            ...parent::share($request),
+            'appName' => config('app.name'),
+            'csrf_token' => csrf_token(),
+            'auth' => [
+                'user' => $user ? [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'username' => $user->username,
+                    'email' => $user->email,
+                    'role' => $user->role,
+                    'is_admin' => $user->isAdmin(),
+                    'profile_photo_url' => $user->profile_photo_url,
+                ] : null,
+            ],
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
+            ],
+        ];
+    }
 }

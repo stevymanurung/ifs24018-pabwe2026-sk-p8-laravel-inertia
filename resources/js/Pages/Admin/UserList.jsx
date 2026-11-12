@@ -1,1 +1,49 @@
-import React from 'react';import {Head,router} from '@inertiajs/react';import {Search,Users,ShieldCheck,Trash2,FileText} from 'lucide-react';import AppLayout from '../../Layouts/AppLayout';import Toast from '../../Components/Toast';export default function UserList({users,filters}){function search(e){e.preventDefault();router.get('/admin/users',{q:e.target.q.value},{preserveState:true});}return <AppLayout><Head title="Kelola Pengguna"/><Toast/><div className="page-heading"><div><span className="eyebrow">ACCESS MANAGEMENT</span><h1>Pengguna<span className="brand-dot">.</span></h1><p>Kelola akun, peran, dan aktivitas penulis.</p></div><div className="stat-inline"><Users size={19}/><b>{users.total}</b><span>akun terdaftar</span></div></div><form className="filter-bar compact" onSubmit={search}><div className="search-input"><Search size={17}/><input name="q" defaultValue={filters.q||''} placeholder="Cari nama, username, email..."/></div><button className="button button-dark">Cari</button></form><div className="list-table admin-list"><div className="list-header"><span>PENGGUNA</span><span>EMAIL</span><span>ARTIKEL</span><span>ROLE</span><span>AKSI</span></div>{users.data.map(u=><div className="post-row" key={u.id}><div className="post-title-cell"><div className="avatar">{u.name[0]}</div><div><b>{u.name}</b><small>@{u.username}</small></div></div><span className="muted">{u.email}</span><span><FileText size={15} className="inline-icon"/> {u.posts_count}</span><span className={`role-pill ${u.role}`}>{u.role==='admin'?'Admin':'Member'}</span><div className="admin-actions"><select aria-label={`Ubah peran ${u.name}`} value={u.role} onChange={e=>router.patch(`/admin/users/${u.id}/role`,{role:e.target.value})}><option value="member">Member</option><option value="admin">Admin</option></select><button className="icon-button danger" aria-label={`Hapus pengguna ${u.name}`} title="Hapus pengguna" onClick={()=>confirm(`Hapus akun ${u.name}?`)&&router.delete(`/admin/users/${u.id}`)}><Trash2 size={16}/></button><a className="icon-button" href={`/admin/users/${u.id}/posts`} aria-label={`Lihat artikel ${u.name}`} title="Lihat artikel"><FileText size={16}/></a></div></div>)}</div><div className="pagination">{users.links.map((l,i)=><button key={i} disabled={!l.url} className={l.active?'page-active':''} onClick={()=>l.url&&router.visit(l.url)} dangerouslySetInnerHTML={{__html:l.label}}/>)}</div></AppLayout>}
+import { Head, Link, router } from '@inertiajs/react';
+import { useState } from 'react';
+import { DownloadIcon, EyeIcon, SearchIcon } from '../../components/Icons';
+import Pagination from '../../components/Pagination';
+import AppLayout from '../../Layouts/AppLayout';
+
+export default function UserList({ users, filters }) {
+    const [search, setSearch] = useState(filters.search ?? '');
+
+    const submit = (event) => {
+        event.preventDefault();
+        router.get('/admin/users', { search }, { preserveState: true });
+    };
+
+    return (
+        <AppLayout title="Pengguna">
+            <Head title="Pengguna" />
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+                <h1 className="font-serif text-2xl font-bold">Pengguna</h1>
+                <Link href="/admin/posts" className="text-sm font-medium text-primary hover:underline">Lihat semua artikel →</Link>
+            </div>
+
+            <form onSubmit={submit} className="relative mb-4">
+                <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari nama, username, atau email..." className="w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-10 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30" />
+            </form>
+
+            <ul className="divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white shadow-sm">
+                {users.data.map((user) => (
+                    <li key={user.id} className="flex flex-wrap items-center gap-4 p-4">
+                        <div className="min-w-0 flex-1">
+                            <p className="truncate font-semibold">{user.name} <span className="font-normal text-slate-500">@{user.username}</span></p>
+                            <p className="truncate text-xs text-slate-500">{user.email} · {user.role} · {user.posts_count} artikel ({user.published_posts_count} terbit)</p>
+                        </div>
+                        <Link href={`/admin/users/${user.id}/posts`} className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-primary hover:bg-primary-light">
+                            <EyeIcon className="h-4 w-4" />
+                            Artikel
+                        </Link>
+                        <a href={`/admin/users/${user.id}/posts/export`} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium hover:bg-slate-50">
+                            <DownloadIcon className="h-4 w-4" />
+                            Excel
+                        </a>
+                    </li>
+                ))}
+            </ul>
+            <Pagination links={users.links} />
+        </AppLayout>
+    );
+}

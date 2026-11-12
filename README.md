@@ -1,64 +1,47 @@
-# BlogVerse Pro — P8 Laravel 13 + Inertia + React
+# BlogVerse Pro — PABWE 2026 Praktikum 8 (Laravel 13 + Inertia.js + React)
 
-Aplikasi blog multi-tier sesuai Studi Kasus C pada modul Praktik Laravel 13, Inertia.js & React (Feature-First).
+Platform publikasi artikel multi-tier: **Publik (Guest)**, **Penulis (Member)**, dan **Admin** (monitoring read-only).
 
 ## Stack
-- PHP 8.4+, Laravel 13, Inertia.js 2, React 19, Vite 7
-- PostgreSQL 17+
-- PhpSpreadsheet untuk impor/ekspor Excel
-- TOAST UI Editor/Viewer untuk Markdown
-- OpenAI Chat Completions API (opsional, perlu API key)
+Laravel 13 · PHP ≥ 8.4 · Inertia.js 2 + React 19 · PostgreSQL ≥ 17 · PhpSpreadsheet · OpenAI · TOAST UI Editor/Viewer · PHPUnit 12 · Tailwind CSS 4 · Vite.
 
-## Persyaratan lokal
-PHP 8.4 dengan ekstensi `ctype`, `curl`, `dom`, `fileinfo`, `filter`, `hash`, `mbstring`, `openssl`, `pdo`, `pdo_pgsql`, `pdo_sqlite` (untuk test), `session`, `tokenizer`, `xml`, `zip`, `gd` (disarankan); Composer 2; Node.js 22+ dan npm; PostgreSQL 17+.
-
-## Instalasi (Windows PowerShell)
-1. Ekstrak ZIP, buka terminal di folder proyek.
-2. Install dependensi:
-   ```powershell
-   composer install
-   npm install
-   ```
-3. Salin `.env.example` menjadi `.env`, lalu sesuaikan koneksi PostgreSQL. Buat database:
-   ```powershell
-   psql -U postgres -c "CREATE DATABASE pabwe_p8_blog;"
-   ```
-4. Generate key dan siapkan database:
-   ```powershell
-   php artisan key:generate
-   php artisan migrate --seed
-   php artisan storage:link
-   ```
-5. Jalankan aplikasi (dua terminal):
-   ```powershell
-   php artisan serve
-   npm run dev
-   ```
-6. Buka `http://127.0.0.1:8000`.
-
-Untuk deployment dan penilaian praktikum, atur `APP_URL` ke URL HTTPS wajib: `https://ifs24018-pabwe2026-sk-p8-laravel-inertia`. Pastikan URL publik dapat diakses dan jangan gunakan localhost/private IP untuk URL penilaian.
-
-## Akun admin awal
-Seeder membuat admin dari variabel `.env`:
-- Username: nilai `ADMIN_USERNAME` (default `admin`)
-- Email: nilai `ADMIN_EMAIL` (default `admin@example.com`)
-- Password: nilai `ADMIN_PASSWORD` (default `ChangeMe123!`)
-
-**Ganti password default sebelum digunakan.** Pendaftaran publik selalu membuat role `member`; role admin hanya dibuat oleh seeder atau diubah melalui akun admin yang sudah terautentikasi.
-
-## OpenAI
-Isi `OPENAI_API_KEY` dan (opsional) `OPENAI_MODEL=gpt-4o-mini` pada `.env`. Fitur inti tetap dapat dipakai tanpa API key; AI Generator menampilkan pesan konfigurasi bila key kosong.
-
-## Format impor Excel
-Baris pertama adalah header. Kolom berurutan: `Judul`, `Slug`, `Kategori`, `Ringkasan`, `Konten`, `Status`, `Penulis`, `Tanggal Publikasi`, `Dibuat`. Impor menggunakan Judul, Kategori, Ringkasan, Konten, dan Status; artikel hasil impor selalu dimiliki akun yang sedang login. Status hanya `Published` atau `Draft`.
-
-## Pengujian dan pemeriksaan
-```powershell
-php artisan test
-composer audit
-vendor/bin/phpunit --coverage-text
+## Menjalankan secara lokal
+```bash
+composer install            # menghasilkan composer.lock -> WAJIB di-commit
+cp .env.example .env
+php artisan key:generate
+# buat database `pabwe_p8_blog` di PostgreSQL, sesuaikan DB_* di .env
+php artisan migrate --seed
+php artisan storage:link
+npm ci --ignore-scripts && npm run build     # atau: npm run dev
+php artisan serve
 ```
-Laporan coverage PHPUnit memerlukan driver PCOV atau Xdebug. Jenkins tetap menjalankan seluruh tes tanpa driver tersebut; jika driver tersedia, Jenkins juga membuat laporan coverage, tetapi coverage 100% bukan syarat build. Untuk mengejar coverage 100% pada `app/`, lengkapi tes untuk seluruh cabang controller/service/middleware dan jalankan PHPUnit dengan driver coverage. ZIP sumber ini menyertakan tes dasar fitur akses, publikasi, dan model; angka coverage harus diverifikasi, bukan diklaim dari proses pembuatan arsip.
+Akun seeder (username / password): `admin` / `admin` dan `member` / `member`.
 
-## Struktur
-Fitur backend berada di `app/Features/{Auth,Post,Admin,Ai,Profile}`. Route publik, member, dan admin dipisah middleware; kepemilikan artikel diverifikasi melalui Policy dan middleware. Halaman publik menggunakan layout tanpa sidebar, sedangkan workspace memakai sidebar.
+Isi `OPENAI_API_KEY` di `.env` untuk AI Generator. Key hanya dibaca server (`config/openai.php`) dan tidak pernah dikirim ke browser.
+
+Ekstensi PHP yang dibutuhkan: `pdo_pgsql`, `gd`, `zip`, `mbstring`, `xml`, `fileinfo`. Untuk coverage: `pcov` atau `xdebug`.
+
+## Pengujian
+```bash
+composer test                  # php artisan test (seluruh Unit + Feature)
+composer test:coverage         # php artisan test --coverage --min=100
+composer audit
+```
+Pengujian memakai SQLite in-memory (lihat `phpunit.xml`). Logika query dijaga portabel (PostgreSQL & SQLite).
+
+## Struktur (Feature-First)
+```
+app/Features/
+  Admin/   Controllers, Services
+  Ai/      Contracts (AiClientInterface), DTO, Exceptions, Services (OpenAiPostGeneratorService)
+  Auth/    Actions, Controllers, Requests
+  Post/    Contracts, Controllers, Enums (PostCategory), Models, Policies, Repositories, Requests, Services
+  Profile/ Controllers, Requests, Services
+app/Http/Middleware/   EnsureRole, EnsurePostOwnership, HandleInertiaRequests
+resources/js/          Layouts, components, Pages/{Public,Auth,Post,Profile,Admin}
+```
+Keamanan akses: middleware `auth` + `role:admin` + `post.owner` (policy `PostPolicy::manage`) di backend; admin hanya punya rute GET (read-only).
+
+## Jenkins
+`Jenkinsfile` adalah file dari modul (tidak diubah). Pastikan **`composer.lock` dan `package-lock.json` ter-commit**. Direktori `storage/**` dan `bootstrap/cache` memiliki `.gitignore` (`*` + `!.gitignore`) agar tetap ada setelah clone sehingga `php artisan view:clear` tidak gagal.

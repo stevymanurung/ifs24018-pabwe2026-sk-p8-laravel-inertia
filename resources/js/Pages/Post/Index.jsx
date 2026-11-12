@@ -1,2 +1,141 @@
-import React,{useState} from 'react';import {Head,router,usePage} from '@inertiajs/react';import {Plus,Search,Download,Upload,MoreVertical,Eye,Pencil,Trash2,Globe,FileText,PenLine,Sparkles,LoaderCircle,Send,ArrowUpRight} from 'lucide-react';import AppLayout from '../../Layouts/AppLayout';import Toast from '../../Components/Toast';import PostFormModal from '../../Components/PostFormModal';
-export default function Index({posts,filters,categories,stats}){const [modal,setModal]=useState(false),[editing,setEditing]=useState(null),[menu,setMenu]=useState(null),[aiOpen,setAiOpen]=useState(false),[prompt,setPrompt]=useState(''),[quantity,setQuantity]=useState(1),[aiBusy,setAiBusy]=useState(false),[deleting,setDeleting]=useState(null);const {flash}=usePage().props;function open(post=null){setEditing(post);setModal(true);}function del(post){if(confirm(`Hapus artikel "${post.title}"?`)){setDeleting(post.id);router.delete(`/dashboard/posts/${post.id}`,{onFinish:()=>setDeleting(null)});}}function search(e){e.preventDefault();router.get('/dashboard/posts',{q:e.target.q.value,status:e.target.status.value},{preserveState:true,replace:true});}function generate(e){e.preventDefault();setAiBusy(true);router.post('/dashboard/posts/ai-generate',{prompt,quantity},{onFinish:()=>setAiBusy(false)});}return <AppLayout><Head title="Artikel Saya"/><Toast/><div className="page-heading"><div><span className="eyebrow">PUBLISHING DESK</span><h1>Artikel saya<span className="brand-dot">.</span></h1><p>Kelola ide, susun cerita, dan bagikan tulisanmu.</p></div><div className="heading-actions"><button className="button button-outline" onClick={()=>setAiOpen(!aiOpen)}><Sparkles size={17}/> AI Generator</button><button className="button button-dark" onClick={()=>open()}><Plus size={18}/> Tulis Artikel</button></div></div><div className="stats-grid"><div className="stat-box"><span>Total Artikel</span><b>{stats.total}</b><FileText size={20}/></div><div className="stat-box"><span>Telah Terbit</span><b>{stats.published}</b><Globe size={20}/></div><div className="stat-box"><span>Masih Draf</span><b>{stats.draft}</b><PenLine size={20}/></div></div>{aiOpen&&<section className="ai-panel"><div className="ai-panel-title"><Sparkles size={20}/><div><b>Rancang draft dengan AI</b><small>Hasil AI akan tersimpan sebagai draft setelah kamu konfirmasi.</small></div></div><form onSubmit={generate} className="ai-form"><input value={prompt} onChange={e=>setPrompt(e.target.value)} minLength="10" maxLength="1000" placeholder="Topik artikel yang ingin dibuat..." required/><label>Jumlah<input type="number" min="1" max="5" value={quantity} onChange={e=>setQuantity(Math.max(1,Math.min(5,Number(e.target.value))))}/></label><button className="button button-dark" disabled={aiBusy}>{aiBusy?<LoaderCircle className="spin"/>:<Sparkles size={16}/>} Buat Draft</button></form>{flash?.aiGenerated?.length>0&&<div className="ai-results"><b>Draft siap ditinjau ({flash.aiGenerated.length})</b>{flash.aiGenerated.map((a,i)=><div className="ai-result" key={i}><b>{a.title}</b><span>{a.category}</span><p>{a.excerpt}</p><small>{a.content.slice(0,180)}...</small></div>)}<button className="button button-dark" onClick={()=>router.post('/dashboard/posts/ai-save',{articles:flash.aiGenerated})}><Send size={16}/> Simpan semua sebagai draft</button></div>}</section>}<div className="toolbar"><form className="filter-bar compact" onSubmit={search}><div className="search-input"><Search size={17}/><input name="q" defaultValue={filters.q||''} placeholder="Cari artikel..."/></div><select name="status" aria-label="Filter artikel berdasarkan status" defaultValue={filters.status||''}><option value="">Semua status</option><option value="published">Published</option><option value="draft">Draft</option></select><button className="button button-light">Filter</button></form><div className="toolbar-actions"><a className="button button-light" href="/dashboard/posts/export"><Download size={16}/> Ekspor</a><form action="/dashboard/posts/import" method="post" encType="multipart/form-data" onSubmit={e=>{e.preventDefault();const fd=new FormData(e.currentTarget);router.post('/dashboard/posts/import',fd,{forceFormData:true});}}><input type="hidden" name="_token" value={document.querySelector('meta[name="csrf-token"]')?.content}/><label className="button button-light upload-button"><Upload size={16}/> Impor<input type="file" name="file" accept=".xlsx,.xls,.csv" required onChange={e=>e.target.form.requestSubmit()}/></label></form></div></div><div className="list-table"><div className="list-header"><span>ARTIKEL</span><span>KATEGORI</span><span>STATUS</span><span>DIPERBARUI</span><span></span></div>{posts.data.map(p=><div className="post-row" key={p.id}><div className="post-title-cell"><div className="post-thumb">{p.cover_image_path?<img src={`/storage/${p.cover_image_path}`} alt={`Cover ${p.title}`}/>:<FileText size={19}/>}</div><div><b>{p.title}</b><small>{p.excerpt||'Tidak ada ringkasan'}</small></div></div><span className="row-category">{p.category}</span><span><i className={`status-dot ${p.is_published?'published':'draft'}`}/>{p.is_published?'Published':'Draft'}</span><span className="muted">{new Date(p.updated_at).toLocaleDateString('id-ID')}</span><div className="row-actions"><button className="button button-status" onClick={()=>router.patch(`/dashboard/posts/${p.id}/publish`)}>{p.is_published?'Jadikan Draf':'Publikasikan'}</button><div className="kebab-wrap"><button className="icon-button" aria-label={`Opsi artikel ${p.title}`} onClick={()=>setMenu(menu===p.id?null:p.id)}><MoreVertical size={18}/></button>{menu===p.id&&<div className="kebab-menu"><button onClick={()=>router.visit(`/dashboard/posts/${p.id}`)}><Eye size={15}/> Detail</button><button onClick={()=>open(p)}><Pencil size={15}/> Ubah Edit</button><button className="danger" disabled={deleting===p.id} onClick={()=>del(p)}>{deleting===p.id?<LoaderCircle className="spin" size={15}/>:<Trash2 size={15}/>} {deleting===p.id?'Menghapus...':'Hapus'}</button></div>}</div></div></div>)}{!posts.data.length&&<div className="empty-state"><PenLine size={26}/><h3>Belum ada artikel</h3><p>Mulai tulis artikel pertamamu.</p><button className="button button-dark" onClick={()=>open()}><Plus size={16}/> Tulis Artikel</button></div>}</div><div className="pagination">{posts.links.map((l,i)=><button key={i} disabled={!l.url} className={l.active?'page-active':''} onClick={()=>l.url&&router.visit(l.url)} dangerouslySetInnerHTML={{__html:l.label}}/>)}</div><PostFormModal open={modal} onClose={()=>setModal(false)} post={editing} categories={categories}/></AppLayout>}
+import { Head, Link, router } from '@inertiajs/react';
+import { useRef, useState } from 'react';
+import AiGeneratorModal from '../../components/AiGeneratorModal';
+import ConfirmDialog from '../../components/ConfirmDialog';
+import CoverThumb from '../../components/CoverThumb';
+import { CheckCircleIcon, ClockIcon, DocumentIcon, DownloadIcon, EyeIcon, PencilIcon, PlusIcon, SearchIcon, SparklesIcon, TrashIcon, UploadIcon } from '../../components/Icons';
+import KebabMenu from '../../components/KebabMenu';
+import Pagination from '../../components/Pagination';
+import PostFormModal from '../../components/PostFormModal';
+import Spinner from '../../components/Spinner';
+import StatCard from '../../components/StatCard';
+import StatusBadge from '../../components/StatusBadge';
+import AppLayout from '../../Layouts/AppLayout';
+import { formatDate } from '../../lib/format';
+
+export default function Index({ posts, stats, filters, categories, ai }) {
+    const [formPost, setFormPost] = useState(undefined); // undefined = tertutup, null = tambah, objek = ubah
+    const [aiOpen, setAiOpen] = useState(false);
+    const [toDelete, setToDelete] = useState(null);
+    const [deleting, setDeleting] = useState(false);
+    const [togglingId, setTogglingId] = useState(null);
+    const [importing, setImporting] = useState(false);
+    const [search, setSearch] = useState(filters.search ?? '');
+    const fileInput = useRef(null);
+
+    const searchPosts = (event) => {
+        event.preventDefault();
+        router.get('/dashboard/posts', { search }, { preserveState: true });
+    };
+
+    const confirmDelete = () => {
+        router.delete(`/dashboard/posts/${toDelete.id}`, {
+            preserveScroll: true,
+            onStart: () => setDeleting(true),
+            onFinish: () => {
+                setDeleting(false);
+                setToDelete(null);
+            },
+        });
+    };
+
+    const togglePublish = (post) => {
+        router.patch(`/dashboard/posts/${post.id}/publish`, {}, {
+            preserveScroll: true,
+            onStart: () => setTogglingId(post.id),
+            onFinish: () => setTogglingId(null),
+        });
+    };
+
+    const importFile = (event) => {
+        const file = event.target.files[0];
+        if (!file) {
+            return;
+        }
+        router.post('/dashboard/posts/import', { file }, {
+            forceFormData: true,
+            preserveScroll: true,
+            onStart: () => setImporting(true),
+            onFinish: () => {
+                setImporting(false);
+                fileInput.current.value = '';
+            },
+        });
+    };
+
+    return (
+        <AppLayout title="Artikel Saya">
+            <Head title="Artikel Saya" />
+
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+                <h1 className="font-serif text-2xl font-bold text-slate-900">Artikel Saya</h1>
+                <div className="flex flex-wrap gap-2">
+                    <button type="button" onClick={() => setFormPost(null)} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark">
+                        <PlusIcon className="h-4 w-4" />
+                        Tambah Artikel
+                    </button>
+                    <button type="button" onClick={() => setAiOpen(true)} className="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500">
+                        <SparklesIcon className="h-4 w-4" />
+                        AI Generator
+                    </button>
+                    <button type="button" onClick={() => fileInput.current.click()} disabled={importing} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60">
+                        {importing ? <Spinner /> : <UploadIcon className="h-4 w-4" />}
+                        Impor Excel
+                    </button>
+                    <input ref={fileInput} type="file" accept=".xlsx,.xls" className="hidden" onChange={importFile} />
+                    <a href="/dashboard/posts/export" className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                        <DownloadIcon className="h-4 w-4" />
+                        Ekspor Excel
+                    </a>
+                </div>
+            </div>
+
+            <div className="mb-6 grid gap-4 sm:grid-cols-3">
+                <StatCard label="Total Artikel" value={stats.total} icon={DocumentIcon} tone="indigo" />
+                <StatCard label="Total Selesai" value={stats.published} icon={CheckCircleIcon} tone="emerald" />
+                <StatCard label="Belum Selesai" value={stats.draft} icon={ClockIcon} tone="amber" />
+            </div>
+
+            <form onSubmit={searchPosts} className="relative mb-4">
+                <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari artikel saya..." className="w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-10 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30" />
+            </form>
+
+            {/* List view (bukan card) */}
+            <ul data-testid="post-list" className="divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-white shadow-sm">
+                {posts.data.length === 0 && <li className="p-10 text-center text-slate-500">Belum ada artikel. Klik "Tambah Artikel" untuk mulai menulis.</li>}
+
+                {posts.data.map((post) => (
+                    <li key={post.id} className="flex flex-wrap items-center gap-4 p-4 sm:flex-nowrap">
+                        <CoverThumb post={post} className="hidden h-14 w-20 sm:flex" />
+                        <div className="min-w-0 flex-1">
+                            <Link href={`/dashboard/posts/${post.id}`} className="block truncate font-semibold text-slate-900 hover:text-primary">{post.title}</Link>
+                            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+                                <StatusBadge published={post.is_published} />
+                                <span>{post.category}</span>
+                                <span>{formatDate(post.created_at)}</span>
+                            </div>
+                        </div>
+                        <button type="button" onClick={() => togglePublish(post)} disabled={togglingId === post.id} className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60">
+                            {togglingId === post.id && <Spinner className="h-3 w-3" />}
+                            {post.is_published ? 'Jadikan Draf' : 'Publikasikan'}
+                        </button>
+                        <KebabMenu
+                            items={[
+                                { label: 'Detail', icon: EyeIcon, tone: 'primary', href: `/dashboard/posts/${post.id}` },
+                                { label: 'Ubah', icon: PencilIcon, tone: 'primary', onClick: () => setFormPost(post) },
+                                { label: 'Hapus', icon: TrashIcon, tone: 'danger', onClick: () => setToDelete(post) },
+                            ]}
+                        />
+                    </li>
+                ))}
+            </ul>
+
+            <Pagination links={posts.links} />
+
+            {formPost !== undefined && <PostFormModal key={formPost?.id ?? 'new'} open post={formPost} categories={categories} onClose={() => setFormPost(undefined)} />}
+            {aiOpen && <AiGeneratorModal open categories={categories} limits={ai} onClose={() => setAiOpen(false)} />}
+            <ConfirmDialog open={toDelete !== null} title="Hapus artikel?" message={`Artikel "${toDelete?.title}" akan dihapus permanen.`} processing={deleting} onConfirm={confirmDelete} onCancel={() => setToDelete(null)} />
+        </AppLayout>
+    );
+}

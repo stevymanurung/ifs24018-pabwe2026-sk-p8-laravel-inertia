@@ -37,6 +37,9 @@ class ApplicationServicesCoverageTest extends TestCase
 
     public function test_login_action_accepts_email_or_username_and_remember_flag(): void
     {
+        $this->withSession([]);
+        request()->setLaravelSession($this->app['session.store']);
+
         $user = User::factory()->create([
             'email' => 'login@example.test',
             'username' => 'loginuser',
@@ -178,26 +181,25 @@ class ApplicationServicesCoverageTest extends TestCase
         }
 
         config(['services.openai.key' => 'test-key', 'services.openai.model' => 'gpt-test']);
-        Http::fake([
-            'api.openai.com/*' => Http::response([
+        Http::fakeSequence('https://api.openai.com/*')
+            ->push([
                 'choices' => [['message' => ['content' => json_encode(['articles' => [[
                     'title' => ' Artikel AI ',
                     'category' => 'Tidak Valid',
                     'excerpt' => ' Ringkasan ',
                     'content' => ' Isi artikel ',
                 ]]])]]],
-            ], 200),
-        ]);
+            ], 200)
+            ->push([
+                'choices' => [['message' => ['content' => json_encode(['articles' => []])]]],
+            ], 200);
+
         $items = app(OpenAiPostGeneratorService::class)->generate('topik teknologi', 2);
         $this->assertSame('Artikel AI', $items[0]['title']);
         $this->assertSame('Umum', $items[0]['category']);
         $this->assertSame('Ringkasan', $items[0]['excerpt']);
         $this->assertCount(1, $items);
 
-        Http::fakeSequence()
-            ->push([
-                'choices' => [['message' => ['content' => json_encode(['articles' => []])]]],
-            ], 200);
         $this->expectException(\RuntimeException::class);
         app(OpenAiPostGeneratorService::class)->generate('topik teknologi', 1);
     }

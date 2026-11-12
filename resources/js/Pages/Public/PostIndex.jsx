@@ -1,1 +1,252 @@
-import React from 'react';import {Head,Link,router,usePage} from '@inertiajs/react';import {Search,ArrowUpRight,Clock3,PenLine,Sparkles} from 'lucide-react';import PublicLayout from '../../Layouts/PublicLayout';import Toast from '../../Components/Toast';export default function PostIndex({posts,filters,categories}){const {auth}=usePage().props;const user=auth?.user;function search(e){e.preventDefault();router.get('/articles',{q:e.target.q.value,category:e.target.category.value},{preserveState:true,replace:true});}return <PublicLayout><Head title="Temukan Cerita"/><Toast/><section className="hero"><div className="hero-copy"><span className="eyebrow"><Sparkles size={14}/> IDE BAIK LAYAK DIBAGIKAN</span><h1>Setiap cerita punya<br/><em>tempat untuk tumbuh.</em></h1><p>Jelajahi tulisan pilihan dari berbagai sudut pandang. Temukan inspirasi, pengetahuan, dan cerita yang membuatmu melihat dunia dengan cara berbeda.</p><div className="hero-actions"><Link href={user?(user.role==='admin'?'/admin/users':'/dashboard/posts'):'/login'} className="button button-dark">{user?'Buka Dashboard':'Mulai Membaca & Menulis'} <ArrowUpRight size={17}/></Link>{!user&&<Link href="/register" className="button button-outline">Daftar Penulis</Link>}</div><div className="hero-meta"><span>01 — Gagasan</span><span>02 — Cerita</span><span>03 — Perspektif</span></div></div><div className="hero-art"><div className="art-orbit orbit-one"/><div className="art-orbit orbit-two"/><div className="art-paper"><span>THE<br/>ART OF<br/><i>THINKING.</i></span><small>NOTES ON CREATIVITY · VOL. 01</small></div><div className="art-stamp">READ<br/>MORE</div></div></section><section className="articles-section"><div className="section-heading"><div><span className="eyebrow">JURNAL KOMUNITAS</span><h2>Jelajahi artikel.</h2></div><span className="muted">{posts.total} tulisan tersedia</span></div><form className="filter-bar" onSubmit={search}><div className="search-input"><Search size={18}/><input name="q" defaultValue={filters.q||''} placeholder="Cari judul atau isi artikel..."/></div><select name="category" aria-label="Filter artikel berdasarkan kategori" defaultValue={filters.category||''}><option value="">Semua kategori</option>{categories.map(c=><option key={c}>{c}</option>)}</select><button className="button button-dark">Cari</button></form>{posts.data.length?<div className="article-grid">{posts.data.map((p,i)=><Link href={`/articles/${p.slug}`} className={`article-card ${i===0?'featured-card':''}`} key={p.id}><div className="article-cover">{p.cover_image_path?<img src={`/storage/${p.cover_image_path}`} alt=""/>:<div className={`cover-placeholder cover-${i%4}`}><span>{p.category}</span><b>{String(i+1).padStart(2,'0')}</b></div>}</div><div className="article-card-body"><span className="category-tag">{p.category}</span><h3>{p.title}</h3><p>{p.excerpt||p.content.slice(0,130)+'...'}</p><div className="article-meta"><span>{p.user?.name||'Penulis'}</span><span><Clock3 size={13}/> {p.published_at?new Date(p.published_at).toLocaleDateString('id-ID'):'Baru'}</span></div></div></Link>)}</div>:<div className="empty-state"><PenLine size={28}/><h3>Belum ada artikel ditemukan</h3><p>Coba kata kunci atau kategori lainnya.</p></div>}<div className="pagination">{posts.links.map((l,i)=><button key={i} disabled={!l.url} className={l.active?'page-active':''} onClick={()=>l.url&&router.visit(l.url)} dangerouslySetInnerHTML={{__html:l.label}}/>)}</div></section></PublicLayout>}
+
+import { Head, Link, router } from '@inertiajs/react';
+import { useState } from 'react';
+
+import CoverThumb from '../../components/CoverThumb';
+import {
+    LoginIcon,
+    SearchIcon,
+    UserPlusIcon,
+} from '../../components/Icons';
+import Pagination from '../../components/Pagination';
+import PublicLayout from '../../Layouts/PublicLayout';
+import { categoryDescription, formatDate } from '../../lib/format';
+
+function ArticleCard({ post, categories }) {
+    return (
+        <article className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md">
+
+            {/* Link gambar diberi nama aksesibel */}
+            <Link
+                href={`/articles/${post.slug}`}
+                aria-label={`Baca artikel ${post.title}`}
+                title={`Baca artikel ${post.title}`}
+                className="block"
+            >
+                <CoverThumb
+                    post={post}
+                    className="h-48 w-full !rounded-none"
+                />
+            </Link>
+
+            <div className="flex flex-1 flex-col p-5">
+
+                <span className="mb-2 w-fit rounded-full bg-primary-light px-2.5 py-0.5 text-xs font-semibold text-primary">
+                    {categoryDescription(categories, post.category)}
+                </span>
+
+                {/* H2 digunakan setelah H1 halaman */}
+                <h2 className="font-serif text-xl font-bold leading-snug text-slate-900">
+                    <Link
+                        href={`/articles/${post.slug}`}
+                        aria-label={`Baca artikel ${post.title}`}
+                        className="hover:text-primary"
+                    >
+                        {post.title}
+                    </Link>
+                </h2>
+
+                {post.excerpt && (
+                    <p className="mt-2 line-clamp-3 text-sm text-slate-600">
+                        {post.excerpt}
+                    </p>
+                )}
+
+                <p className="mt-auto pt-4 text-xs text-slate-600">
+                    {post.user?.name} · {formatDate(post.published_at)}
+                </p>
+            </div>
+        </article>
+    );
+}
+
+export default function PostIndex({
+    hero,
+    posts,
+    categories,
+    filters,
+}) {
+    const [search, setSearch] = useState(filters.search ?? '');
+    const [category, setCategory] = useState(filters.category ?? '');
+
+    const submit = (event) => {
+        event.preventDefault();
+
+        router.get(
+            '/articles',
+            { search, category },
+            { preserveState: true }
+        );
+    };
+
+    const pickCategory = (value) => {
+        setCategory(value);
+
+        router.get(
+            '/articles',
+            { search, category: value },
+            { preserveState: true }
+        );
+    };
+
+    return (
+        <PublicLayout>
+            <Head title={hero ? 'Beranda' : 'Artikel'} />
+
+            {hero && (
+                <section
+                    aria-labelledby="hero-heading"
+                    className="bg-gradient-to-br from-indigo-700 via-indigo-600 to-violet-600 text-white"
+                >
+                    <div className="mx-auto max-w-4xl px-4 py-20 text-center sm:px-6">
+
+                        <h1
+                            id="hero-heading"
+                            className="font-serif text-4xl font-bold leading-tight sm:text-5xl"
+                        >
+                            Tempat gagasan menemukan pembacanya
+                        </h1>
+
+                        <p className="mx-auto mt-5 max-w-2xl text-lg text-indigo-100">
+                            Baca artikel pilihan dari para penulis,
+                            atau bergabunglah dan terbitkan tulisanmu sendiri.
+                        </p>
+
+                        <div className="mt-8 flex flex-wrap justify-center gap-3">
+
+                            <Link
+                                href="/login"
+                                className="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 font-semibold text-indigo-700 hover:bg-indigo-50"
+                            >
+                                <LoginIcon className="h-5 w-5" />
+                                Masuk
+                            </Link>
+
+                            <Link
+                                href="/register"
+                                className="inline-flex items-center gap-2 rounded-lg border border-white/60 px-6 py-3 font-semibold text-white hover:bg-white/10"
+                            >
+                                <UserPlusIcon className="h-5 w-5" />
+                                Daftar Penulis
+                            </Link>
+
+                        </div>
+                    </div>
+                </section>
+            )}
+
+            <section
+                aria-labelledby="articles-heading"
+                className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6"
+            >
+
+                {/* H1 untuk halaman daftar artikel jika tidak ada hero */}
+                {!hero && (
+                    <div className="mb-8">
+                        <h1
+                            id="articles-heading"
+                            className="font-serif text-3xl font-bold text-slate-900"
+                        >
+                            Jelajahi Artikel
+                        </h1>
+
+                        <p className="mt-2 text-slate-600">
+                            Temukan berbagai gagasan dan tulisan menarik
+                            dari komunitas penulis.
+                        </p>
+                    </div>
+                )}
+
+                {hero && (
+                    <h2
+                        id="articles-heading"
+                        className="mb-6 font-serif text-2xl font-bold text-slate-900"
+                    >
+                        Artikel Terbaru
+                    </h2>
+                )}
+
+                <form
+                    onSubmit={submit}
+                    role="search"
+                    aria-label="Cari artikel"
+                    className="mb-6 flex flex-col gap-3 sm:flex-row"
+                >
+                    <div className="relative flex-1">
+
+                        <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+
+                        <input
+                            type="search"
+                            aria-label="Cari judul atau isi artikel"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            placeholder="Cari judul atau isi artikel..."
+                            className="w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-10 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+                        />
+                    </div>
+
+                    <button
+                        type="submit"
+                        className="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-dark"
+                    >
+                        Cari
+                    </button>
+                </form>
+
+                <div
+                    className="mb-8 flex flex-wrap gap-2"
+                    aria-label="Filter kategori artikel"
+                >
+                    <button
+                        type="button"
+                        aria-pressed={category === ''}
+                        onClick={() => pickCategory('')}
+                        className={`rounded-full border px-4 py-1.5 text-sm ${
+                            category === ''
+                                ? 'border-primary bg-primary text-white'
+                                : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
+                        }`}
+                    >
+                        Semua
+                    </button>
+
+                    {categories.map((c) => (
+                        <button
+                            key={c.value}
+                            type="button"
+                            aria-pressed={category === c.value}
+                            onClick={() => pickCategory(c.value)}
+                            className={`rounded-full border px-4 py-1.5 text-sm ${
+                                category === c.value
+                                    ? 'border-primary bg-primary text-white'
+                                    : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
+                            }`}
+                        >
+                            {c.value}
+                        </button>
+                    ))}
+                </div>
+
+                {posts.data.length === 0 ? (
+                    <p className="rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center text-slate-600">
+                        Belum ada artikel yang cocok.
+                    </p>
+                ) : (
+                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                        {posts.data.map((post) => (
+                            <ArticleCard
+                                key={post.id}
+                                post={post}
+                                categories={categories}
+                            />
+                        ))}
+                    </div>
+                )}
+
+                <Pagination links={posts.links} />
+
+            </section>
+        </PublicLayout>
+    );
+}

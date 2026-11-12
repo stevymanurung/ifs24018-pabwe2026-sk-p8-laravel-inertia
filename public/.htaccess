@@ -1,18 +1,27 @@
-# Cache policy untuk aset statis (khusus Apache; aman diabaikan oleh server lain)
+
+# CACHE STATIC FILES
 <IfModule mod_headers.c>
-  # Aset Vite memakai hash pada nama file, jadi aman di-cache 1 tahun
-  <FilesMatch "\.(js|css|woff2?|map)$">
-    Header set Cache-Control "public, max-age=31536000, immutable"
-  </FilesMatch>
-  <FilesMatch "\.(png|jpe?g|gif|webp|avif|svg|ico)$">
-    Header set Cache-Control "public, max-age=2592000"
-  </FilesMatch>
+
+    <FilesMatch "\.(css|js|mjs|woff2|png|jpg|jpeg|webp|avif|svg)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+
+    <FilesMatch "\.map$">
+        Header set Cache-Control "public, max-age=86400"
+    </FilesMatch>
+
 </IfModule>
+
+# EXPIRES
 <IfModule mod_expires.c>
-  ExpiresActive On
-  ExpiresByType text/css "access plus 1 year"
-  ExpiresByType application/javascript "access plus 1 year"
-  ExpiresByType text/javascript "access plus 1 year"
-  ExpiresByType image/svg+xml "access plus 1 month"
-  ExpiresByType image/x-icon "access plus 1 month"
+
+    ExpiresActive On
+
+    ExpiresByType text/css "access plus 1 year"
+    ExpiresByType application/javascript "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+
 </IfModule>
