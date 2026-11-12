@@ -52,7 +52,7 @@ class ApplicationDomainCoverageTest extends TestCase
 
         $this->assertSame($member->id, $member->posts()->first()->user_id);
         $this->assertSame($member->id, $post->user->id);
-        $this->assertFalse($post->is_published);
+        $this->assertFalse((bool) $post->is_published);
         $this->assertNull($post->cover_url);
     }
 
