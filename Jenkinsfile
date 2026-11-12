@@ -89,12 +89,10 @@ pipeline {
 
                     echo "=== PHP Dependencies Installed ==="
 
-                    echo "=== Composer Audit (report findings without blocking build) ==="
-                    if composer audit --no-interaction; then
-                        echo "=== Composer Audit OK (no known vulnerabilities) ==="
-                    else
-                        echo "WARNING: Composer audit menemukan advisory. Lihat detail di log; build tetap dilanjutkan."
-                    fi
+                    echo "=== Composer Audit (fail on vulnerabilities) ==="
+                    # Exit non-zero jika ada advisory → pipeline FAILURE
+                    composer audit --no-interaction
+                    echo "=== Composer Audit OK (no known vulnerabilities) ==="
                 '''
             }
         }
@@ -131,7 +129,7 @@ pipeline {
         }
 
         // ============================================================
-        // TEST (PHPUnit + optional Coverage)
+        // TEST (PHPUnit + Coverage)
         // ============================================================
         stage('Test') {
             agent {
@@ -154,7 +152,11 @@ pipeline {
                                 exit(1);
                             }
                         }
-                        echo "OK: gd, zip, mbstring, pdo_sqlite are available." . PHP_EOL;
+                        if (!extension_loaded("pcov") && !extension_loaded("xdebug")) {
+                            fwrite(STDERR, "Missing coverage driver: need pcov or xdebug" . PHP_EOL);
+                            exit(1);
+                        }
+                        echo "OK: gd, zip, mbstring, pdo_sqlite + coverage driver ready." . PHP_EOL;
                     '
 
                     echo "=== Preparing Laravel Testing Environment ==="
@@ -170,27 +172,83 @@ pipeline {
                     php artisan config:clear
                     php artisan view:clear
 
-                    if php -r '
-                        $pcov = extension_loaded("pcov")
-                            && filter_var(ini_get("pcov.enabled"), FILTER_VALIDATE_BOOLEAN);
-                        $xdebug = extension_loaded("xdebug")
-                            && in_array("coverage", explode(",", strtolower((string) ini_get("xdebug.mode"))), true);
-                        exit($pcov || $xdebug ? 0 : 1);
-                    '; then
-                        echo "=== Running PHPUnit with Coverage ==="
-                        php vendor/bin/phpunit \
-                            --colors=never \
-                            --coverage-text=coverage.txt \
-                            --coverage-clover=coverage.xml \
-                            --coverage-html=coverage-html
-                        echo "=== Coverage Report Generated ==="
-                        ls -lh coverage.xml coverage.txt
-                    else
-                        echo "=== Coverage driver unavailable; running PHPUnit without coverage ==="
-                        php vendor/bin/phpunit --colors=never
-                    fi
+                    echo "=== Running PHPUnit with Coverage ==="
+
+                    php vendor/bin/phpunit \
+                        --colors=never \
+                        --coverage-text=coverage.txt \
+                        --coverage-clover=coverage.xml \
+                        --coverage-html=coverage-html
 
                     echo "=== Tests Passed ==="
+                    ls -lh coverage.xml coverage.txt || true
+
+                    echo "=== Enforcing 100% Coverage (app/) ==="
+                    php -r '
+                        if (!is_file("coverage.xml")) {
+                            fwrite(STDERR, "coverage.xml tidak ditemukan. Coverage wajib dihasilkan." . PHP_EOL);
+                            exit(1);
+                        }
+
+                        $xml = @simplexml_load_file("coverage.xml");
+                        if ($xml === false) {
+                            fwrite(STDERR, "coverage.xml tidak dapat diparse." . PHP_EOL);
+                            exit(1);
+                        }
+
+                        $metrics = $xml->project->metrics ?? null;
+                        if ($metrics === null) {
+                            $nodes = $xml->xpath("//project/metrics");
+                            $metrics = $nodes[0] ?? null;
+                        }
+                        if ($metrics === null) {
+                            fwrite(STDERR, "Metrik coverage tidak ditemukan di coverage.xml." . PHP_EOL);
+                            exit(1);
+                        }
+
+                        // PHPUnit clover project metrics: statements/methods/elements
+                        // (tidak selalu ada coveredclasses — jangan dipakai sebagai gate)
+                        $statements = (int) $metrics["statements"];
+                        $coveredStatements = (int) $metrics["coveredstatements"];
+                        $methods = (int) $metrics["methods"];
+                        $coveredMethods = (int) $metrics["coveredmethods"];
+                        $elements = (int) $metrics["elements"];
+                        $coveredElements = (int) $metrics["coveredelements"];
+
+                        if ($statements <= 0) {
+                            fwrite(STDERR, "Tidak ada statement yang diukur (statements=0)." . PHP_EOL);
+                            exit(1);
+                        }
+
+                        $linePct = round(100 * $coveredStatements / $statements, 2);
+                        $methodPct = $methods > 0 ? round(100 * $coveredMethods / $methods, 2) : 100.0;
+                        $elementPct = $elements > 0 ? round(100 * $coveredElements / $elements, 2) : 100.0;
+
+                        echo "Coverage summary (source=app/):" . PHP_EOL;
+                        echo "  Lines/Statements : {$coveredStatements}/{$statements} ({$linePct}%)" . PHP_EOL;
+                        echo "  Methods          : {$coveredMethods}/{$methods} ({$methodPct}%)" . PHP_EOL;
+                        echo "  Elements         : {$coveredElements}/{$elements} ({$elementPct}%)" . PHP_EOL;
+
+                        $failed = false;
+                        if ($coveredStatements < $statements) {
+                            fwrite(STDERR, "FAIL: Line coverage harus 100%. Saat ini {$linePct}%." . PHP_EOL);
+                            $failed = true;
+                        }
+                        if ($methods > 0 && $coveredMethods < $methods) {
+                            fwrite(STDERR, "FAIL: Method coverage harus 100%. Saat ini {$methodPct}%." . PHP_EOL);
+                            $failed = true;
+                        }
+                        if ($elements > 0 && $coveredElements < $elements) {
+                            fwrite(STDERR, "FAIL: Element coverage harus 100%. Saat ini {$elementPct}%." . PHP_EOL);
+                            $failed = true;
+                        }
+
+                        if ($failed) {
+                            exit(1);
+                        }
+
+                        echo "OK: Coverage 100% (lines, methods, elements)." . PHP_EOL;
+                    '
                 '''
             }
 
@@ -234,7 +292,7 @@ pipeline {
                     echo "=== Trivy Version ==="
                     trivy --version
 
-                    echo "=== Trivy Scan (report findings without blocking build) ==="
+                    echo "=== Trivy Scan ==="
 
                     trivy fs \
                         --cache-dir .trivy-cache \
@@ -247,7 +305,7 @@ pipeline {
                         --skip-dirs bootstrap/cache \
                         --format sarif \
                         --output trivy-results.sarif \
-                        --exit-code 0 \
+                        --exit-code 1 \
                         .
 
                     echo "=== Trivy Result ==="
