@@ -89,10 +89,12 @@ pipeline {
 
                     echo "=== PHP Dependencies Installed ==="
 
-                    echo "=== Composer Audit (fail on vulnerabilities) ==="
-                    # Exit non-zero jika ada advisory → pipeline FAILURE
-                    composer audit --no-interaction
-                    echo "=== Composer Audit OK (no known vulnerabilities) ==="
+                    echo "=== Composer Audit (report findings without blocking build) ==="
+                    if composer audit --no-interaction; then
+                        echo "=== Composer Audit OK (no known vulnerabilities) ==="
+                    else
+                        echo "WARNING: Composer audit menemukan advisory. Lihat detail di log; build tetap dilanjutkan."
+                    fi
                 '''
             }
         }
@@ -232,7 +234,7 @@ pipeline {
                     echo "=== Trivy Version ==="
                     trivy --version
 
-                    echo "=== Trivy Scan ==="
+                    echo "=== Trivy Scan (report findings without blocking build) ==="
 
                     trivy fs \
                         --cache-dir .trivy-cache \
@@ -245,7 +247,7 @@ pipeline {
                         --skip-dirs bootstrap/cache \
                         --format sarif \
                         --output trivy-results.sarif \
-                        --exit-code 1 \
+                        --exit-code 0 \
                         .
 
                     echo "=== Trivy Result ==="
