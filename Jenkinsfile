@@ -229,21 +229,17 @@ pipeline {
                         echo "  Methods          : {$coveredMethods}/{$methods} ({$methodPct}%)" . PHP_EOL;
                         echo "  Elements         : {$coveredElements}/{$elements} ({$elementPct}%)" . PHP_EOL;
 
-                        // Ambang minimum coverage disesuaikan dengan hasil aktual.
-                        // Tingkatkan bertahap setelah menambahkan test untuk kode yang belum tercakup.
-                        $minimumCoverage = 50.0;
                         $failed = false;
-
-                        if ($linePct < $minimumCoverage) {
-                            fwrite(STDERR, "FAIL: Line coverage minimum {$minimumCoverage}% belum tercapai. Saat ini {$linePct}%." . PHP_EOL);
+                        if ($coveredStatements < $statements) {
+                            fwrite(STDERR, "FAIL: Line coverage harus 100%. Saat ini {$linePct}%." . PHP_EOL);
                             $failed = true;
                         }
-                        if ($methodPct < $minimumCoverage) {
-                            fwrite(STDERR, "FAIL: Method coverage minimum {$minimumCoverage}% belum tercapai. Saat ini {$methodPct}%." . PHP_EOL);
+                        if ($methods > 0 && $coveredMethods < $methods) {
+                            fwrite(STDERR, "FAIL: Method coverage harus 100%. Saat ini {$methodPct}%." . PHP_EOL);
                             $failed = true;
                         }
-                        if ($elementPct < $minimumCoverage) {
-                            fwrite(STDERR, "FAIL: Element coverage minimum {$minimumCoverage}% belum tercapai. Saat ini {$elementPct}%." . PHP_EOL);
+                        if ($elements > 0 && $coveredElements < $elements) {
+                            fwrite(STDERR, "FAIL: Element coverage harus 100%. Saat ini {$elementPct}%." . PHP_EOL);
                             $failed = true;
                         }
 
@@ -251,7 +247,7 @@ pipeline {
                             exit(1);
                         }
 
-                        echo "OK: Coverage memenuhi minimum {$minimumCoverage}% (hasil aktual tetap dilaporkan)." . PHP_EOL;
+                        echo "OK: Coverage 100% (lines, methods, elements)." . PHP_EOL;
                     '
                 '''
             }
@@ -296,7 +292,7 @@ pipeline {
                     echo "=== Trivy Version ==="
                     trivy --version
 
-                    echo "=== Trivy Scan (findings tetap dilaporkan, tidak memblokir pipeline) ==="
+                    echo "=== Trivy Scan ==="
 
                     trivy fs \
                         --cache-dir .trivy-cache \
@@ -309,7 +305,7 @@ pipeline {
                         --skip-dirs bootstrap/cache \
                         --format sarif \
                         --output trivy-results.sarif \
-                        --exit-code 0 \
+                        --exit-code 1 \
                         .
 
                     echo "=== Trivy Result ==="
