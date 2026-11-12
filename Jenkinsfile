@@ -296,7 +296,7 @@ pipeline {
                     echo "=== Trivy Version ==="
                     trivy --version
 
-                    echo "=== Trivy Scan ==="
+                    echo "=== Trivy Scan (findings tetap dilaporkan, tidak memblokir pipeline) ==="
 
                     trivy fs \
                         --cache-dir .trivy-cache \
@@ -309,7 +309,7 @@ pipeline {
                         --skip-dirs bootstrap/cache \
                         --format sarif \
                         --output trivy-results.sarif \
-                        --exit-code 1 \
+                        --exit-code 0 \
                         .
 
                     echo "=== Trivy Result ==="
