@@ -24,7 +24,7 @@ export default defineConfig({
         // Aktifkan source maps produksi.
         sourcemap: true,
 
-        minify: 'esbuild',
+        minify: 'oxc',
         cssMinify: true,
     },
 
