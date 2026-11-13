@@ -1,6 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
-import { LoginIcon, UserPlusIcon } from '../../components/Icons';
-import MarkdownViewer from '../../components/MarkdownViewer';
+import { LoginIcon, UserPlusIcon } from '../../Components/Icons';
+import MarkdownViewer from '../../Components/MarkdownViewer';
 import PublicLayout from '../../Layouts/PublicLayout';
 import { formatDate } from '../../lib/format';
 

@@ -1,11 +1,11 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { useRef, useState } from 'react';
-import ConfirmDialog from '../../components/ConfirmDialog';
-import { PencilIcon, TrashIcon } from '../../components/Icons';
-import MarkdownViewer from '../../components/MarkdownViewer';
-import PostFormModal from '../../components/PostFormModal';
-import Spinner from '../../components/Spinner';
-import StatusBadge from '../../components/StatusBadge';
+import ConfirmDialog from '../../Components/ConfirmDialog';
+import { PencilIcon, TrashIcon } from '../../Components/Icons';
+import MarkdownViewer from '../../Components/MarkdownViewer';
+import PostFormModal from '../../Components/PostFormModal';
+import Spinner from '../../Components/Spinner';
+import StatusBadge from '../../Components/StatusBadge';
 import AppLayout from '../../Layouts/AppLayout';
 import { formatDate } from '../../lib/format';
 

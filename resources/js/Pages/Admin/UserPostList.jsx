@@ -1,8 +1,8 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
-import { DownloadIcon, SearchIcon } from '../../components/Icons';
-import Pagination from '../../components/Pagination';
-import ReadOnlyPostList from '../../components/ReadOnlyPostList';
+import { DownloadIcon, SearchIcon } from '../../Components/Icons';
+import Pagination from '../../Components/Pagination';
+import ReadOnlyPostList from '../../Components/ReadOnlyPostList';
 import AppLayout from '../../Layouts/AppLayout';
 
 export default function UserPostList({ owner, posts, stats, filters }) {

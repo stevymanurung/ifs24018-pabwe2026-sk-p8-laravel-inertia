@@ -2,13 +2,13 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 
-import CoverThumb from '../../components/CoverThumb';
+import CoverThumb from '../../Components/CoverThumb';
 import {
     LoginIcon,
     SearchIcon,
     UserPlusIcon,
-} from '../../components/Icons';
-import Pagination from '../../components/Pagination';
+} from '../../Components/Icons';
+import Pagination from '../../Components/Pagination';
 import PublicLayout from '../../Layouts/PublicLayout';
 import { categoryDescription, formatDate } from '../../lib/format';
 

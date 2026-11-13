@@ -1,5 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import Spinner from '../../components/Spinner';
+import Spinner from '../../Components/Spinner';
 import PublicLayout from '../../Layouts/PublicLayout';
 
 const fields = [

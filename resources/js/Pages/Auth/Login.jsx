@@ -1,6 +1,6 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
-import Spinner from '../../components/Spinner';
+import Spinner from '../../Components/Spinner';
 import PublicLayout from '../../Layouts/PublicLayout';
 
 /**

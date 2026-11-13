@@ -1,8 +1,8 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
-import FlashMessage from '../components/FlashMessage';
-import { DocumentIcon, HomeIcon, LogoutIcon, MenuIcon, UserPlusIcon, UsersIcon, XIcon } from '../components/Icons';
-import LoadingIndicator from '../components/LoadingIndicator';
+import FlashMessage from '../Components/FlashMessage';
+import { DocumentIcon, HomeIcon, LogoutIcon, MenuIcon, UserPlusIcon, UsersIcon, XIcon } from '../Components/Icons';
+import LoadingIndicator from '../Components/LoadingIndicator';
 
 function NavItem({ href, icon: Icon, children, active }) {
     return (

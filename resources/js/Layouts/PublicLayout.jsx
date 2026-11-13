@@ -1,13 +1,13 @@
 
 import { Link, router, usePage } from '@inertiajs/react';
-import FlashMessage from '../components/FlashMessage';
+import FlashMessage from '../Components/FlashMessage';
 import {
     HomeIcon,
     LoginIcon,
     LogoutIcon,
     UserPlusIcon,
-} from '../components/Icons';
-import LoadingIndicator from '../components/LoadingIndicator';
+} from '../Components/Icons';
+import LoadingIndicator from '../Components/LoadingIndicator';
 
 export default function PublicLayout({ children }) {
     const { auth, appName } = usePage().props;

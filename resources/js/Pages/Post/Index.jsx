@@ -1,15 +1,15 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { useRef, useState } from 'react';
-import AiGeneratorModal from '../../components/AiGeneratorModal';
-import ConfirmDialog from '../../components/ConfirmDialog';
-import CoverThumb from '../../components/CoverThumb';
-import { CheckCircleIcon, ClockIcon, DocumentIcon, DownloadIcon, EyeIcon, PencilIcon, PlusIcon, SearchIcon, SparklesIcon, TrashIcon, UploadIcon } from '../../components/Icons';
-import KebabMenu from '../../components/KebabMenu';
-import Pagination from '../../components/Pagination';
-import PostFormModal from '../../components/PostFormModal';
-import Spinner from '../../components/Spinner';
-import StatCard from '../../components/StatCard';
-import StatusBadge from '../../components/StatusBadge';
+import AiGeneratorModal from '../../Components/AiGeneratorModal';
+import ConfirmDialog from '../../Components/ConfirmDialog';
+import CoverThumb from '../../Components/CoverThumb';
+import { CheckCircleIcon, ClockIcon, DocumentIcon, DownloadIcon, EyeIcon, PencilIcon, PlusIcon, SearchIcon, SparklesIcon, TrashIcon, UploadIcon } from '../../Components/Icons';
+import KebabMenu from '../../Components/KebabMenu';
+import Pagination from '../../Components/Pagination';
+import PostFormModal from '../../Components/PostFormModal';
+import Spinner from '../../Components/Spinner';
+import StatCard from '../../Components/StatCard';
+import StatusBadge from '../../Components/StatusBadge';
 import AppLayout from '../../Layouts/AppLayout';
 import { formatDate } from '../../lib/format';
 

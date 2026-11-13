@@ -1,7 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
-import { DownloadIcon, EyeIcon, SearchIcon } from '../../components/Icons';
-import Pagination from '../../components/Pagination';
+import { DownloadIcon, EyeIcon, SearchIcon } from '../../Components/Icons';
+import Pagination from '../../Components/Pagination';
 import AppLayout from '../../Layouts/AppLayout';
 
 export default function UserList({ users, filters }) {
