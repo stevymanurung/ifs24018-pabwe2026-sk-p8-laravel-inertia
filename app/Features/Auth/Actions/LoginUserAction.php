@@ -3,6 +3,7 @@
 namespace App\Features\Auth\Actions;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class LoginUserAction
 {
@@ -17,9 +18,17 @@ class LoginUserAction
             ? 'email'
             : 'username';
 
-        return Auth::guard('web')->attempt([
+        $success = Auth::guard('web')->attempt([
             $field => $login,
             'password' => $password,
         ], $remember);
+
+        if (! $success) {
+            throw ValidationException::withMessages([
+                'login' => 'Username/email atau password salah.',
+            ]);
+        }
+
+        return true;
     }
 }

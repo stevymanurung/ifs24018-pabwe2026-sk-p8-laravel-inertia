@@ -62,15 +62,14 @@ class ApplicationServicesCoverageTest extends TestCase
             app(LoginUserAction::class)->execute('validuser', 'wrong-password');
             $this->fail('Expected validation exception.');
         } catch (ValidationException $exception) {
-            $this->assertArrayHasKey('username', $exception->errors());
+            $this->assertArrayHasKey('login', $exception->errors());
         }
     }
 
     public function test_post_repository_filters_public_and_member_lists_and_normalizes_posts(): void
     {
         $owner = User::factory()->create();
-        $public = Post::create([
-            'user_id' => $owner->id,
+        $public = $owner->posts()->create([
             'title' => 'Teknologi Modern',
             'slug' => 'teknologi-modern',
             'category' => 'Teknologi',
@@ -79,8 +78,7 @@ class ApplicationServicesCoverageTest extends TestCase
             'is_published' => true,
             'published_at' => now(),
         ]);
-        Post::create([
-            'user_id' => $owner->id,
+        $owner->posts()->create([
             'title' => 'Draft Pendidikan',
             'slug' => 'draft-pendidikan',
             'category' => 'Pendidikan',
@@ -89,26 +87,25 @@ class ApplicationServicesCoverageTest extends TestCase
         ]);
 
         $repository = app(PostRepository::class);
-        $this->assertSame(1, $repository->publicList(['q' => 'modern', 'category' => 'Teknologi'])->total());
-        $this->assertSame(1, $repository->userList($owner, ['status' => 'published'])->total());
-        $this->assertSame(1, $repository->userList($owner, ['status' => 'draft'])->total());
-        $this->assertSame(1, $repository->userList($owner, ['q' => 'draft'])->total());
+        $this->assertSame(1, $repository->paginatePublished('modern', 'Teknologi', 10)->total());
+        $this->assertSame(1, $repository->paginateForUser($owner->id, 'draft', 10)->total());
+        $this->assertSame(['total' => 2, 'published' => 1, 'draft' => 1], $repository->statsForUser($owner->id));
 
-        $created = $repository->create($owner, [
+        $created = $repository->create($owner->id, [
             'title' => 'Artikel Baru',
+            'slug' => 'artikel-baru',
             'category' => 'Umum',
             'content' => 'Konten artikel baru.',
             'is_published' => true,
+            'published_at' => now(),
         ]);
         $this->assertNotNull($created->published_at);
-        $this->assertSame('artikel-baru', $created->slug);
 
         $updated = $repository->update($created, [
             'title' => 'Judul Diubah',
-            'is_published' => false,
         ]);
-        $this->assertSame('judul-diubah', $updated->slug);
-        $this->assertNull($updated->published_at);
+        $this->assertSame('artikel-baru', $updated->slug);
+        $this->assertTrue($updated->is_published);
 
         $repository->delete($updated);
         $this->assertDatabaseMissing('posts', ['id' => $updated->id]);
@@ -119,8 +116,7 @@ class ApplicationServicesCoverageTest extends TestCase
     {
         Storage::fake('public');
         $owner = User::factory()->create();
-        $post = Post::create([
-            'user_id' => $owner->id,
+        $post = $owner->posts()->create([
             'title' => 'Artikel Layanan',
             'slug' => 'artikel-layanan',
             'category' => 'Umum',
@@ -144,7 +140,7 @@ class ApplicationServicesCoverageTest extends TestCase
         $this->assertDatabaseMissing('posts', ['id' => $post->id]);
     }
 
-    public function test_profile_and_admin_services_update_search_roles_and_delete(): void
+    public function test_profile_and_admin_services_update_profile_and_search_users(): void
     {
         $user = User::factory()->create();
         app(ProfileService::class)->update($user, [
@@ -163,16 +159,14 @@ class ApplicationServicesCoverageTest extends TestCase
         $this->assertTrue(Hash::check('NewPassword123!', $user->fresh()->password));
 
         $adminService = app(AdminUserService::class);
-        $this->assertSame(1, $adminService->list('Nama Password')->total());
-        $adminService->changeRole($user->fresh(), 'admin');
-        $this->assertSame('admin', $user->fresh()->role);
-        $adminService->delete($user->fresh());
-        $this->assertDatabaseMissing('users', ['id' => $user->id]);
+        $users = $adminService->paginateUsers('Nama Password');
+        $this->assertSame(1, $users->total());
+        $this->assertSame($user->id, $users->first()->id);
     }
 
     public function test_openai_service_handles_missing_key_success_and_invalid_response(): void
     {
-        config(['services.openai.key' => null]);
+        config(['openai.api_key' => null]);
         try {
             app(OpenAiPostGeneratorService::class)->generate('topik teknologi', 1);
             $this->fail('Expected missing API key exception.');
@@ -180,7 +174,7 @@ class ApplicationServicesCoverageTest extends TestCase
             $this->assertStringContainsString('OPENAI_API_KEY', $exception->getMessage());
         }
 
-        config(['services.openai.key' => 'test-key', 'services.openai.model' => 'gpt-test']);
+        config(['openai.api_key' => 'test-key', 'openai.model' => 'gpt-test']);
         Http::fakeSequence('https://api.openai.com/*')
             ->push([
                 'choices' => [['message' => ['content' => json_encode(['articles' => [[

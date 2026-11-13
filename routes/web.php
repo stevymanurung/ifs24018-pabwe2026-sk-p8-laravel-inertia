@@ -40,7 +40,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
-    Route::prefix('dashboard/posts')->name('posts.')->group(function () {
+    Route::middleware('role:member')->prefix('dashboard/posts')->name('posts.')->group(function () {
         // Rute statis harus berada SEBELUM rute {post}.
         Route::get('/', [PostController::class, 'index'])->name('index');
         Route::post('/', [PostController::class, 'store'])->name('store');

@@ -6,12 +6,18 @@ use App\Features\Post\Enums\PostCategory;
 
 final readonly class GeneratedPostItem
 {
+    public PostCategory $category;
+
     public function __construct(
         public string $title,
-        public PostCategory $category,
+        string|PostCategory $category,
         public ?string $excerpt,
         public string $content,
-    ) {}
+    ) {
+        $this->category = $category instanceof PostCategory
+            ? $category
+            : (PostCategory::tryFrom($category) ?? PostCategory::Umum);
+    }
 
     /**
      * @return array{title: string, category: string, excerpt: string|null, content: string}

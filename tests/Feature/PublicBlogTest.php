@@ -9,8 +9,8 @@ class PublicBlogTest extends TestCase
  use RefreshDatabase;
  public function test_guest_can_view_public_articles_but_not_drafts():void {
   $user=User::factory()->create();
-  Post::create(['user_id'=>$user->id,'title'=>'Publik','slug'=>'publik','category'=>'Teknologi','content'=>'Isi artikel cukup panjang untuk dibaca.','is_published'=>true,'published_at'=>now()]);
-  Post::create(['user_id'=>$user->id,'title'=>'Draft','slug'=>'draft','category'=>'Umum','content'=>'Isi draft yang tidak boleh muncul.','is_published'=>false]);
+  $user->posts()->create(['title'=>'Publik','slug'=>'publik','category'=>'Teknologi','content'=>'Isi artikel cukup panjang untuk dibaca.','is_published'=>true,'published_at'=>now()]);
+  $user->posts()->create(['title'=>'Draft','slug'=>'draft','category'=>'Umum','content'=>'Isi draft yang tidak boleh muncul.','is_published'=>false]);
   $this->get('/articles')->assertInertia(fn($page)=>$page->component('Public/PostIndex')->has('posts.data',1)->where('posts.data.0.title','Publik'));
   $this->get('/articles/publik')->assertInertia(fn($page)=>$page->component('Public/PostShow')->where('post.title','Publik'));
   $this->get('/articles/draft')->assertNotFound();

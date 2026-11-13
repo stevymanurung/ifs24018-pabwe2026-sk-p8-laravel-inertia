@@ -10,7 +10,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -25,11 +24,8 @@ class AuthController extends Controller
     {
         $credentials = $request->validated();
 
-        if (! $action->execute($credentials['login'], $credentials['password'], $request->boolean('remember'))) {
-            throw ValidationException::withMessages([
-                'login' => 'Username/email atau password salah.',
-            ]);
-        }
+        // LoginUserAction throws ValidationException on failure
+        $action->execute($credentials['login'], $credentials['password'], $request->boolean('remember'));
 
         $request->session()->regenerate();
 

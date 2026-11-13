@@ -8,6 +8,11 @@ class LoginRequest extends FormRequest
 {
     protected function prepareForValidation(): void
     {
+        // Accept 'username' as an alias for 'login' (for backward compatibility)
+        if ($this->has('username') && ! $this->has('login')) {
+            $this->merge(['login' => $this->input('username')]);
+        }
+
         $login = trim((string) $this->input('login'));
 
         $this->merge([

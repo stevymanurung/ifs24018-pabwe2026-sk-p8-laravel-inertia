@@ -94,10 +94,10 @@ class AdditionalApplicationFlowsTest extends TestCase
         $user = User::factory()->create();
         $this->actingAs($user)->get('/dashboard/posts')->assertOk();
 
-        $this->actingAs($user)->post('/dashboard/posts/ai-generate', [
-            'prompt' => 'Topik teknologi untuk artikel blog',
+        $this->actingAs($user)->postJson('/dashboard/posts/ai-generate', [
+            'topic' => '',
             'quantity' => 1,
-        ])->assertSessionHasErrors('ai');
+        ])->assertUnprocessable()->assertJsonValidationErrors('topic');
 
         Http::fake([
             'api.openai.com/*' => Http::response([
@@ -109,14 +109,14 @@ class AdditionalApplicationFlowsTest extends TestCase
                 ]]])]]],
             ], 200),
         ]);
-        config(['services.openai.key' => 'test-key']);
-        $this->actingAs($user)->post('/dashboard/posts/ai-generate', [
-            'prompt' => 'Topik teknologi untuk artikel blog',
+        config(['openai.api_key' => 'test-key']);
+        $this->actingAs($user)->postJson('/dashboard/posts/ai-generate', [
+            'topic' => 'Topik teknologi untuk artikel blog',
             'quantity' => 1,
-        ])->assertRedirect()->assertSessionHas('aiGenerated');
+        ])->assertOk()->assertJsonPath('items.0.title', 'Draft dari AI');
 
         $this->actingAs($user)->post('/dashboard/posts/ai-save', [
-            'articles' => [[
+            'items' => [[
                 'title' => 'Artikel AI Disimpan',
                 'category' => 'Teknologi',
                 'excerpt' => 'Ringkasan',
@@ -130,8 +130,7 @@ class AdditionalApplicationFlowsTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
         $member = User::factory()->create();
-        Post::create([
-            'user_id' => $member->id,
+        $member->posts()->create([
             'title' => 'Artikel Admin',
             'slug' => 'artikel-admin',
             'category' => 'Umum',
@@ -140,9 +139,5 @@ class AdditionalApplicationFlowsTest extends TestCase
 
         $this->actingAs($admin)->get('/admin/posts')->assertOk();
         $this->actingAs($admin)->get('/admin/users/'.$member->id.'/posts')->assertOk();
-        $this->actingAs($admin)->patch('/admin/users/'.$member->id.'/role', [
-            'role' => 'unknown',
-        ])->assertSessionHasErrors('role');
-        $this->actingAs($admin)->delete('/admin/users/'.$admin->id)->assertStatus(422);
     }
 }

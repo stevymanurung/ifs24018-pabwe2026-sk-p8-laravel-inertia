@@ -6,6 +6,7 @@ use App\Features\Ai\DTO\GeneratedPostItem;
 use App\Features\Post\Enums\PostCategory;
 use App\Features\Post\Models\Post;
 use App\Features\Post\Policies\PostPolicy;
+use App\Features\Post\Services\PostService;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -42,8 +43,7 @@ class ApplicationDomainCoverageTest extends TestCase
         $this->assertTrue($admin->isAdmin());
         $this->assertFalse($admin->isMember());
 
-        $post = Post::create([
-            'user_id' => $member->id,
+        $post = $member->posts()->create([
             'title' => 'Artikel relasi',
             'slug' => 'artikel-relasi',
             'category' => 'Umum',
@@ -59,16 +59,16 @@ class ApplicationDomainCoverageTest extends TestCase
     public function test_post_unique_slug_handles_empty_title_and_collisions(): void
     {
         $user = User::factory()->create();
-        Post::create([
-            'user_id' => $user->id,
+        $user->posts()->create([
             'title' => 'Judul',
             'slug' => 'judul',
             'category' => 'Umum',
             'content' => 'Konten artikel yang cukup panjang.',
         ]);
 
-        $this->assertSame('artikel', Post::uniqueSlug('!!!'));
-        $this->assertSame('judul-2', Post::uniqueSlug('Judul'));
+        $service = app(PostService::class);
+        $this->assertSame('artikel', $service->uniqueSlug('!!!'));
+        $this->assertSame('judul-2', $service->uniqueSlug('Judul'));
     }
 
     public function test_post_policy_allows_owner_and_admin_view_but_only_owner_edit(): void
@@ -76,8 +76,7 @@ class ApplicationDomainCoverageTest extends TestCase
         $owner = User::factory()->create();
         $other = User::factory()->create();
         $admin = User::factory()->admin()->create();
-        $post = Post::create([
-            'user_id' => $owner->id,
+        $post = $owner->posts()->create([
             'title' => 'Artikel policy',
             'slug' => 'artikel-policy',
             'category' => 'Umum',

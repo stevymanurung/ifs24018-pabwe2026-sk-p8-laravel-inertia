@@ -48,6 +48,11 @@ class User extends Authenticatable
         return $this->role === self::ROLE_ADMIN;
     }
 
+    public function isMember(): bool
+    {
+        return $this->role === self::ROLE_MEMBER;
+    }
+
     /**
      * URL foto profil (null jika belum mengunggah foto).
      *
