@@ -189,9 +189,12 @@ class ApplicationServicesCoverageTest extends TestCase
             ], 200);
 
         $items = app(OpenAiPostGeneratorService::class)->generate('topik teknologi', 2);
-        $this->assertSame('Artikel AI', $items[0]['title']);
-        $this->assertSame('Umum', $items[0]['category']);
-        $this->assertSame('Ringkasan', $items[0]['excerpt']);
+        $this->assertSame([
+            'title' => 'Artikel AI',
+            'category' => 'Umum',
+            'excerpt' => 'Ringkasan',
+            'content' => 'Isi artikel',
+        ], $items[0]->toArray());
         $this->assertCount(1, $items);
 
         $this->expectException(\RuntimeException::class);

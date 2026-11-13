@@ -71,7 +71,7 @@ class ApplicationDomainCoverageTest extends TestCase
         $this->assertSame('judul-2', $service->uniqueSlug('Judul'));
     }
 
-    public function test_post_policy_allows_owner_and_admin_view_but_only_owner_edit(): void
+    public function test_post_policy_only_allows_the_owner_to_manage_a_post(): void
     {
         $owner = User::factory()->create();
         $other = User::factory()->create();
@@ -84,12 +84,8 @@ class ApplicationDomainCoverageTest extends TestCase
         ]);
         $policy = new PostPolicy();
 
-        $this->assertTrue($policy->view($owner, $post));
-        $this->assertTrue($policy->view($admin, $post));
-        $this->assertFalse($policy->view($other, $post));
-        $this->assertTrue($policy->update($owner, $post));
-        $this->assertTrue($policy->delete($owner, $post));
-        $this->assertFalse($policy->update($admin, $post));
-        $this->assertFalse($policy->delete($other, $post));
+        $this->assertTrue($policy->manage($owner, $post));
+        $this->assertFalse($policy->manage($admin, $post));
+        $this->assertFalse($policy->manage($other, $post));
     }
 }

@@ -38,7 +38,7 @@ class AdditionalApplicationFlowsTest extends TestCase
 
     public function test_profile_page_and_profile_update_validation(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['username' => 'profiluser']);
         $this->actingAs($user)->get('/profile')->assertOk();
         $this->actingAs($user)->put('/profile', [
             'name' => 'Nama Profil',
@@ -46,7 +46,7 @@ class AdditionalApplicationFlowsTest extends TestCase
             'email' => $user->email,
             'password' => '',
             'password_confirmation' => '',
-        ])->assertRedirect();
+        ])->assertRedirect()->assertSessionHasNoErrors();
         $this->assertSame('Nama Profil', $user->fresh()->name);
 
         $this->actingAs($user)->put('/profile', [

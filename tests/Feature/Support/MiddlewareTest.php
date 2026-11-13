@@ -65,7 +65,7 @@ class MiddlewareTest extends TestCase
 
         $this->actingAs($user)
             ->withSession(['success' => 'Berhasil', 'error' => 'Gagal'])
-            ->get('/dashboard/posts')
+            ->get('/admin/users')
             ->assertInertia(fn (Assert $page) => $page
                 ->where('auth.user.username', 'boss')
                 ->where('auth.user.role', 'admin')
