@@ -65,7 +65,7 @@ class FrontendContractTest extends TestCase
 
     public function test_modal_is_fullscreen_with_contrasting_header_and_footer_and_right_aligned_actions(): void
     {
-        $modal = $this->js('components/FullScreenModal.jsx');
+        $modal = $this->js('Components/FullScreenModal.jsx');
 
         $this->assertStringContainsString('fixed inset-0', $modal);
         $this->assertStringContainsString('h-dvh w-screen', $modal);
@@ -77,14 +77,14 @@ class FrontendContractTest extends TestCase
 
     public function test_add_edit_and_ai_use_the_fullscreen_modal(): void
     {
-        $this->assertStringContainsString('<FullScreenModal', $this->js('components/PostFormModal.jsx'));
-        $this->assertStringContainsString('<FullScreenModal', $this->js('components/AiGeneratorModal.jsx'));
+        $this->assertStringContainsString('<FullScreenModal', $this->js('Components/PostFormModal.jsx'));
+        $this->assertStringContainsString('<FullScreenModal', $this->js('Components/AiGeneratorModal.jsx'));
     }
 
     public function test_post_list_uses_list_view_kebab_menu_and_stat_cards(): void
     {
         $index = $this->js('Pages/Post/Index.jsx');
-        $kebab = $this->js('components/KebabMenu.jsx');
+        $kebab = $this->js('Components/KebabMenu.jsx');
 
         $this->assertStringContainsString('data-testid="post-list"', $index);
         $this->assertStringContainsString('<ul', $index);
@@ -102,7 +102,7 @@ class FrontendContractTest extends TestCase
 
     public function test_ai_generator_uses_number_input_with_bounds_and_loading_state(): void
     {
-        $ai = $this->js('components/AiGeneratorModal.jsx');
+        $ai = $this->js('Components/AiGeneratorModal.jsx');
 
         $this->assertStringContainsString('type="number" min={limits.min} max={limits.max}', $ai);
         $this->assertStringContainsString('<Spinner', $ai);
@@ -113,16 +113,16 @@ class FrontendContractTest extends TestCase
 
     public function test_markdown_editor_and_viewer_use_toast_ui(): void
     {
-        $this->assertStringContainsString("from '@toast-ui/editor'", $this->js('components/MarkdownEditor.jsx'));
-        $this->assertStringContainsString("@toast-ui/editor/dist/toastui-editor-viewer", $this->js('components/MarkdownViewer.jsx'));
-        $this->assertStringContainsString('<MarkdownEditor', $this->js('components/PostFormModal.jsx'));
+        $this->assertStringContainsString("from '@toast-ui/editor'", $this->js('Components/MarkdownEditor.jsx'));
+        $this->assertStringContainsString("@toast-ui/editor/dist/toastui-editor-viewer", $this->js('Components/MarkdownViewer.jsx'));
+        $this->assertStringContainsString('<MarkdownEditor', $this->js('Components/PostFormModal.jsx'));
         $this->assertStringContainsString('<MarkdownViewer', $this->js('Pages/Post/Show.jsx'));
         $this->assertStringContainsString('<MarkdownViewer', $this->js('Pages/Public/PostShow.jsx'));
     }
 
     public function test_loading_indicators_exist(): void
     {
-        $loading = $this->js('components/LoadingIndicator.jsx');
+        $loading = $this->js('Components/LoadingIndicator.jsx');
 
         $this->assertStringContainsString('Memproses tindakan...', $loading);
         $this->assertStringContainsString('top-progress-bar', $loading);
