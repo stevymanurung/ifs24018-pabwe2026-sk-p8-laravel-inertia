@@ -24,7 +24,7 @@ export default function FlashMessage() {
         <div role="alert" className={`mb-4 flex items-start justify-between gap-3 rounded-xl border px-4 py-3 text-sm ${isError ? 'border-red-200 bg-red-50 text-red-700' : 'border-emerald-200 bg-emerald-50 text-emerald-800'}`}>
             <span>{message}</span>
             <button type="button" onClick={() => setVisible(false)} className="font-semibold" aria-label="Tutup notifikasi">
-                ×
+                <span aria-hidden="true">×</span>
             </button>
         </div>
     );

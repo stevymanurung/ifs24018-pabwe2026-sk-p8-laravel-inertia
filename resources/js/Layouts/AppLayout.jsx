@@ -24,7 +24,7 @@ export default function AppLayout({ title, children }) {
     const sidebar = (
         <div className="flex h-full flex-col bg-indigo-900 p-4 text-white">
             <Link href="/" className="mb-6 flex items-center gap-2 px-2 text-lg font-bold">
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-sm font-black text-indigo-900">B</span>
+                <span aria-hidden="true" className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-sm font-black text-indigo-900">B</span>
                 {appName}
             </Link>
 

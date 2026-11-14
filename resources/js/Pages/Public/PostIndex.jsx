@@ -39,7 +39,6 @@ function ArticleCard({ post, categories }) {
                 <h2 className="font-serif text-xl font-bold leading-snug text-slate-900">
                     <Link
                         href={`/articles/${post.slug}`}
-                        aria-label={`Baca artikel ${post.title}`}
                         className="hover:text-primary"
                     >
                         {post.title}

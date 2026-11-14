@@ -25,10 +25,12 @@ export default function PublicLayout({ children }) {
                     <div className="flex items-center gap-6">
                         <Link
                             href="/"
-                            aria-label={`${appName}, kembali ke beranda`}
                             className="flex items-center gap-2 text-lg font-bold tracking-tight text-slate-900"
                         >
-                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-sm font-black text-white">
+                            <span
+                                aria-hidden="true"
+                                className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-sm font-black text-white"
+                            >
                                 B
                             </span>
                             {appName}
@@ -55,7 +57,6 @@ export default function PublicLayout({ children }) {
                         <div className="flex items-center gap-2">
                             <Link
                                 href={user.is_admin ? '/admin/users' : '/dashboard/posts'}
-                                aria-label="Buka dashboard"
                                 className="flex items-center gap-2 rounded-full border border-slate-200 py-1 pl-1 pr-3 text-sm font-medium text-slate-700 hover:bg-slate-100"
                             >
                                 {user.profile_photo_url ? (
@@ -65,7 +66,10 @@ export default function PublicLayout({ children }) {
                                         className="h-7 w-7 rounded-full object-cover"
                                     />
                                 ) : (
-                                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-bold text-white">
+                                    <span
+                                        aria-hidden="true"
+                                        className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-bold text-white"
+                                    >
                                         {user.name.charAt(0).toUpperCase()}
                                     </span>
                                 )}
